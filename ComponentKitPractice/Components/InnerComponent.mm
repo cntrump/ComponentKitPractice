@@ -19,43 +19,34 @@
 @implementation InnerComponent
 
 +(instancetype)newWithPost:(Post *)post andContext:(PostContext *)context {
-
-    PostIdentifyComponent *postIdentityComponent = [PostIdentifyComponent newWithPost:post];
-
-    DescriptionComponent *descriptionComponent = [DescriptionComponent newWithDescription:post.postDescription];
-
-    ImageComponent *imageComponent = [ImageComponent newWithImage:post.postImage];
-
-    NSArray<UIImage *> *images = @[[UIImage imageNamed:@"like"], [UIImage imageNamed:@"comment"], [UIImage imageNamed:@"share"]];
-
-    NSArray<UIImage *> *highlightedImages = @[[UIImage imageNamed:@"like_sup"], [UIImage imageNamed:@"comment"], [UIImage imageNamed:@"share"]];
-
-    NSArray<NSString *> * titles = @[@"Like", @"Comment", @"Share"];
-
-    ReactionCommentsComponent *reactionCommentsComponent = [ReactionCommentsComponent newWith:post];
-
-    BottomButtonsRowComponent *rowsButtonComponents =
-    [BottomButtonsRowComponent
-     newWithImages:images highlightedImages:highlightedImages titles:titles];
-
-    CKFlexboxComponent *flexBoxComponent = [CKFlexboxComponent
-                                            newWithView:{} size:{} style:{
-        .alignItems = CKFlexboxAlignItemsStretch,
-        .direction = CKFlexboxDirectionColumn
-    } children:{{postIdentityComponent, .sizeConstraints = {.height = 54}}, {descriptionComponent}, {imageComponent}, {reactionCommentsComponent}, {horizontalComponent()}, {rowsButtonComponents}}];
-
-    return [super newWithComponent:flexBoxComponent];
+    return [super newWithComponent:CK::FlexboxComponentBuilder()
+        .alignItems(CKFlexboxAlignItemsStretch)
+        .direction(CKFlexboxDirectionColumn)
+        .children({
+            { [PostIdentifyComponent newWithPost:post], .sizeConstraints = {.height = 54} },
+            { [DescriptionComponent newWithDescription:post.postDescription] },
+            { [ImageComponent newWithImage:post.postImage] },
+            { [ReactionCommentsComponent newWith:post] },
+            { horizontalComponent() },
+            { [BottomButtonsRowComponent newWithImages:@[[UIImage imageNamed:@"like"], [UIImage imageNamed:@"comment"], [UIImage imageNamed:@"share"]]
+                                     highlightedImages:@[[UIImage imageNamed:@"like_sup"], [UIImage imageNamed:@"comment"], [UIImage imageNamed:@"share"]]
+                                                titles:@[@"Like", @"Comment", @"Share"]] }
+        })
+        .build()];
 }
 
 static CKComponent *horizontalComponent() {
-    CKComponent *lineComponent = [CKComponent newWithView:{
-        [UIView class],
-        {
-            {@selector(setBackgroundColor:), Constants.lightGrayColor}
-        }
-    } size:{.height = 1}];
-
-    return CK::InsetComponentBuilder().insets({.top = 0, .bottom = 5, .left = 10, .right = 10}).component(lineComponent).build();
+    return CK::InsetComponentBuilder()
+        .insets({.top = 0, .bottom = 5, .left = 10, .right = 10})
+        .component(CK::ComponentBuilder()
+                   .view({
+                       [UIView class],
+                       {
+                           {@selector(setBackgroundColor:), Constants.lightGrayColor}
+                       }})
+                   .size({.height = 1})
+                   .build())
+        .build();
 }
 
 @end

@@ -11,26 +11,23 @@
 @implementation ImageComponent
 
 +(instancetype)newWithImage:(UIImage*)image {
-    CKComponent *imageComponent =
-    CK::ImageComponentBuilder()
-        .image(image)
-        .attributes({
-            {
-                @selector(setContentMode:), @(UIViewContentModeScaleAspectFit)
-            },
-            {
-                @selector(setBackgroundColor:), [UIColor whiteColor]
-            }
-        })
-        .size({.height = 200})
-        .build();
-
 //    CKFlexboxComponent *flexBoxComponent = [CKFlexboxComponent newWithView:{} size:{} style:{
 //        .alignItems = CKFlexboxAlignItemsStretch,
 //        .direction = CKFlexboxDirectionColumn
 //    } children:{{imageComponent}}];
 
-    return [super newWithComponent:imageComponent];
+    return [super newWithComponent:CK::ImageComponentBuilder()
+            .image(image)
+            .attributes({
+                {
+                    @selector(setContentMode:), @(UIViewContentModeScaleAspectFit)
+                },
+                {
+                    @selector(setBackgroundColor:), [UIColor whiteColor]
+                }
+            })
+            .size({.height = 200})
+            .build()];
 }
 
 @end

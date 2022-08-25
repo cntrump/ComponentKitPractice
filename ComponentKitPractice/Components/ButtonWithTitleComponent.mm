@@ -20,19 +20,8 @@
 //    } size:{35, 35}];
 
     CKComponentScope scope(self);
+    
     const BOOL isHighlighted = [scope.state() boolValue];
-
-    UIImage *finalImage = isHighlighted ? highlightedImage : image;
-
-    CKComponent* buttonComponent = CK::ButtonComponentBuilder()
-        .action(@selector(buttonTapped))
-        .options({
-            .images = {finalImage}, .titleAlignment = NSTextAlignmentLeft, .size = {30, 30},
-            .tapTargetExpansion = {.right = -5}
-        })
-        .build();
-
-    UIColor *titleColor = isHighlighted ? Constants.blueColor : [UIColor blackColor];
 
 //    CKLabelComponent *labelComponent = [CKLabelComponent
 //    newWithLabelAttributes:{
@@ -43,28 +32,38 @@
 //    viewAttributes:{}
 //    size:{ }];
 
-    CKComponent* titleTextComponent = CK::ButtonComponentBuilder()
-        .action(@selector(buttonTapped))
-        .options({
-            .titleAlignment = NSTextAlignmentLeft,
-            .titleFont = [UIFont systemFontOfSize:12.0],
-            .selected = isHighlighted,
-            .titleColors = {titleColor},
-            .titles = {title}
-        })
-        .build();
-
-    CKComponent *spacing = [CKComponent newWithView:{
-        [UIView class],
-        {{@selector(setBackgroundColor:), [UIColor clearColor]}}
-    } size:{.width = 5}];
-
-    CKFlexboxComponent *flexBoxComponent = [CKFlexboxComponent newWithView:{} size:{} style:{
-        .alignItems = CKFlexboxAlignItemsCenter,
-        .direction = CKFlexboxDirectionRow
-    } children:{{buttonComponent}, {spacing}, {titleTextComponent}}];
-
-    ButtonWithTitleComponent *finalComponent = [super newWithComponent:flexBoxComponent];
+    ButtonWithTitleComponent *finalComponent = [super newWithComponent:CK::FlexboxComponentBuilder()
+                                                .direction(CKFlexboxDirectionRow)
+                                                .alignItems(CKFlexboxAlignItemsCenter)
+                                                .children({
+                                                    {CK::ButtonComponentBuilder()
+                                                            .action(@selector(buttonTapped))
+                                                            .options({
+                                                                .images = {isHighlighted ? highlightedImage : image},
+                                                                .titleAlignment = NSTextAlignmentLeft,
+                                                                .size = {30, 30},
+                                                                .tapTargetExpansion = {.right = -5}
+                                                            })
+                                                            .build()},
+                                                    {CK::ComponentBuilder()
+                                                        .view({
+                                                            [UIView class],
+                                                            {{@selector(setBackgroundColor:), [UIColor clearColor]}}
+                                                        })
+                                                        .size({.width = 5})
+                                                        .build()},
+                                                    {CK::ButtonComponentBuilder()
+                                                            .action(@selector(buttonTapped))
+                                                            .options({
+                                                                .titleAlignment = NSTextAlignmentLeft,
+                                                                .titleFont = [UIFont systemFontOfSize:12.0],
+                                                                .selected = isHighlighted,
+                                                                .titleColors = {isHighlighted ? Constants.blueColor : [UIColor blackColor]},
+                                                                .titles = {title}
+                                                            })
+                                                            .build()}
+                                                })
+                                                .build()];
     finalComponent->_isClickable = isClickable;
 
     return finalComponent;

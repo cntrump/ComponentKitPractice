@@ -15,29 +15,22 @@
     auto subComponents = std::vector<CKFlexboxComponentChild>{};
 
     for (NSInteger i = 0; i < titles.count; i++) {
-        ButtonWithTitleComponent *buttonWithTitleComponent =
-        [ButtonWithTitleComponent
-         newWithImage:images[i]
-         highlightedImage:highlightedImages[i]
-         title:titles[i]
-         isClickable:(i == 0)];
-
-        subComponents.push_back({buttonWithTitleComponent, .alignSelf = CKFlexboxAlignSelfCenter});
+        subComponents.push_back({[ButtonWithTitleComponent
+                                  newWithImage:images[i]
+                                  highlightedImage:highlightedImages[i]
+                                  title:titles[i]
+                                  isClickable:(i == 0)], .alignSelf = CKFlexboxAlignSelfCenter});
     }
 
-    CKFlexboxComponent *flexBoxComponent =
-    [CKFlexboxComponent
-     newWithView:{}
-     size:{}
-     style:
-    {
-        .direction = CKFlexboxDirectionRow,
-        .justifyContent = CKFlexboxJustifyContentSpaceEvenly,
-        .alignItems = CKFlexboxAlignItemsCenter
-    }
-     children:subComponents];
-
-    return [super newWithComponent:CK::InsetComponentBuilder().insets({.top = 5, .bottom = 5, .left = 10, .right = 10}).component(flexBoxComponent).build()];
+    return [super newWithComponent:CK::InsetComponentBuilder()
+            .insets({.top = 5, .bottom = 5, .left = 10, .right = 10})
+            .component(CK::FlexboxComponentBuilder()
+                       .direction(CKFlexboxDirectionRow)
+                       .justifyContent(CKFlexboxJustifyContentSpaceEvenly)
+                       .alignItems(CKFlexboxAlignItemsCenter)
+                       .children(subComponents)
+                       .build())
+            .build()];
 }
 
 @end

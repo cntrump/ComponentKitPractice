@@ -15,36 +15,18 @@
 @implementation MainPostComponent
 
 +(instancetype)newWithPost:(Post *)post andContext:(PostContext *)context {
-
-    InnerComponent *innerComponent =
-    [InnerComponent
-     newWithPost: post
-     andContext: context];
-
-    CKComponent *backgroundComponent = CK::BackgroundLayoutComponentBuilder()
-        .component(innerComponent)
-        .background([CKComponent
-                     newWithView:
-                   {
-                     [UIView class],
-                     {
-                       {
-                           @selector(setBackgroundColor:), [UIColor whiteColor]
-                       },
-                       {
-                           CKComponentViewAttribute::LayerAttribute(@selector(setCornerRadius:)), @0.0
-                       }
-                     }
-                   }
-                     size:{}])
-        .build();
-
-    CKComponent *insetComponent = CK::InsetComponentBuilder()
-        .insets({.top = 10, .bottom = 10, .left = 10, .right = 10})
-        .component(backgroundComponent)
-        .build();
-
-    return [super newWithComponent:insetComponent];
+    return [super newWithComponent:CK::InsetComponentBuilder()
+            .insets({.top = 10, .bottom = 10, .left = 10, .right = 10})
+            .component(CK::BackgroundLayoutComponentBuilder()
+                       .component([InnerComponent newWithPost: post andContext: context])
+                       .background(CK::ComponentBuilder().view({
+                           [UIView class],
+                           {
+                               { @selector(setBackgroundColor:), [UIColor whiteColor] },
+                               { CKComponentViewAttribute::LayerAttribute(@selector(setCornerRadius:)), @0.0 }
+                           }}).build())
+                       .build())
+            .build()];
 }
 
 @end

@@ -10,7 +10,16 @@
 
 @implementation Post
 
-- (instancetype)initWithProfilePhoto:(UIImage *)photo username:(NSString *)username whenPosted:(NSString *)whenPosted views:(NSInteger)views postDescription:(NSString *)postDescription postImage:(UIImage *)postImage whoLiked:(NSString *)whoLiked commentsCount:(NSInteger)commentsCount reactions:(NSDictionary<NSString *,NSNumber *> *)reactions sharesCount:(NSInteger)sharesCount {
+- (instancetype)initWithProfilePhoto:(UIImage *)photo
+                            username:(NSString *)username
+                          whenPosted:(NSString *)whenPosted
+                               views:(NSInteger)views
+                     postDescription:(NSString *)postDescription
+                           postImage:(UIImage *)postImage
+                            whoLiked:(NSString *)whoLiked
+                       commentsCount:(NSInteger)commentsCount
+                           reactions:(NSDictionary<NSString *,NSNumber *> *)reactions
+                         sharesCount:(NSInteger)sharesCount {
     if (self = [super init]) {
         _photo = photo;
         _username = username;
