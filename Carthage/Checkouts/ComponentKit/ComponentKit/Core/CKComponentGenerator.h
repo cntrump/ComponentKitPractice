@@ -13,7 +13,7 @@
 #if CK_NOT_SWIFT
 
 #import <CoreGraphics/CoreGraphics.h>
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 #import <unordered_set>
 
@@ -56,9 +56,9 @@ struct CKComponentGeneratorOptions {
   CK::NonNull<id<CKComponentGeneratorDelegate>> delegate;
 
   /**
-   A `componentProvider` block that is called when generate component.
+   A `componentProvider` function that is called when generate component.
    */
-  CK::NonNull<CKComponentProviderBlock> componentProvider;
+  CK::NonNull<CKComponentProviderFunc> componentProvider;
 
   /**
    Optional `componentPredicates` that is used for creating `CKComponentScopeRoot`.
@@ -81,6 +81,9 @@ struct CKComponentGeneratorOptions {
    A queue that is used to perform all majors tasks in `CKComponentGenerator`.
    All public APIs of `CKComponentGenerator` must be called on this queue.
    Defaults to main queue.
+
+   NOTE: setting this to `nil` makes `CKComponentGenerator` thread-safe but it acquires
+   locks when calling methods, which should be avoided unless it's extremely necessary.
    */
   dispatch_queue_t affinedQueue = dispatch_get_main_queue();
 };
@@ -92,8 +95,9 @@ struct CKComponentGeneratorOptions {
  */
 @interface CKComponentGenerator : NSObject
 
+CK_INIT_UNAVAILABLE;
+
 - (instancetype)initWithOptions:(const CKComponentGeneratorOptions &)options NS_DESIGNATED_INITIALIZER;
-- (instancetype)init CK_NOT_DESIGNATED_INITIALIZER_ATTRIBUTE;
 
 /**
  Updates the model used to render the component.
@@ -104,6 +108,16 @@ struct CKComponentGeneratorOptions {
  Updates the context used to render the component.
  */
 - (void)updateContext:(id<NSObject>)context;
+
+/**
+ Set this so that calling `UITraitCollection.currentTraitCollection` in component returns desired value.
+*/
+- (void)updateTraitCollection:(UITraitCollection *)traitCollection;
+
+/**
+ Set to indicate if the assistive technologies are enabled.
+*/
+- (void)updateAccessibilityStatus:(BOOL)accessibilityEnabled;
 
 /**
  Generate component synchronously on affined queue and return the result.
@@ -118,10 +132,10 @@ struct CKComponentGeneratorOptions {
 - (void)generateComponentAsynchronously;
 
 /**
- Ignore component reuse in next component generation.
+ Force a complete components reload (ignoring all reuse options) in next component generation.
  This should be used if you are going to update `CKComponentContext` in the hierarchy.
  */
-- (void)ignoreComponentReuseInNextGeneration;
+- (void)forceReloadInNextGeneration;
 
 /**
  The underlying scope root that is maintained by `CKComponentGenerator`.
@@ -131,7 +145,7 @@ struct CKComponentGeneratorOptions {
 /**
  This is a temporary API for code migration. DO NOT USE.
  */
-- (void)setScopeRoot:(CKComponentScopeRoot *)scopeRoot;
+- (void)setScopeRoot:(CK::NonNull<CKComponentScopeRoot *>)scopeRoot;
 
 @end
 

@@ -28,18 +28,19 @@
   self.recordMode = NO;
 }
 
-static CKRatioLayoutComponent *ratioLayoutComponent(CGFloat ratio, const CKComponentSize &size)
+static CKComponent *ratioLayoutComponent(CGFloat ratio, const RCComponentSize &size)
 {
-  return [CKRatioLayoutComponent
-          newWithRatio:ratio
-          size:{}
-          component:
-          [CKComponent
-           newWithView:{
-             [UIView class],
-             {{@selector(setBackgroundColor:), [UIColor greenColor]}}
-           }
-           size:size]];
+  return
+  CK::RatioLayoutComponentBuilder()
+  .ratio(ratio)
+  .component(
+    CK::ComponentBuilder()
+    .viewClass([UIView class])
+    .backgroundColor([UIColor greenColor])
+    .size(size)
+    .build()
+  )
+  .build();
 }
 
 - (void)testRatioLayout
@@ -49,17 +50,17 @@ static CKRatioLayoutComponent *ratioLayoutComponent(CGFloat ratio, const CKCompo
   CKSnapshotVerifyComponent(ratioLayoutComponent(2.0, {100, 100}), kFixedSize, @"DoubleRatio");
   CKSnapshotVerifyComponent(ratioLayoutComponent(7.0, {100, 100}), kFixedSize, @"SevenTimesRatio");
 
-  CKComponentSize tallSize = {20, 200};
+  RCComponentSize tallSize = {20, 200};
   CKSnapshotVerifyComponent(ratioLayoutComponent(10.0, tallSize), kFixedSize, @"TenTimesRatioWithItemTooBig");
 }
 
 - (void)testRatioLayoutRendersToNilForNilInput
 {
-  CKRatioLayoutComponent *c =
-  [CKRatioLayoutComponent
-   newWithRatio:0.5
-   size:{}
-   component:nil];
+  const auto c =
+  CK::RatioLayoutComponentBuilder()
+  .ratio(0.5)
+  .component(nil)
+  .build();
   XCTAssertNil(c);
 }
 

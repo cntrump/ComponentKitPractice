@@ -8,6 +8,7 @@
 
 #import "Post.h"
 #import "ReactionCommentsComponent.h"
+#import <ComponentTextKit/ComponentTextKit.h>
 
 @implementation ReactionCommentsComponent
 
@@ -27,14 +28,18 @@
 
     auto subComponents = std::vector<CKFlexboxComponentChild>{};
 
-    NSMutableArray<CKImageComponent *> *imageComponents = [NSMutableArray new];
+    NSMutableArray<CKComponent *> *imageComponents = [NSMutableArray new];
 
     [post.reactions enumerateKeysAndObjectsUsingBlock:^(NSString *reactionName, NSNumber *count, BOOL* stop) {
         UIImage *reactionImage = [UIImage imageNamed:reactionName];
 
-        CKImageComponent *imageComponent = [CKImageComponent newWithImage:reactionImage attributes:{
-            {@selector(setContentMode:), UIViewContentModeScaleAspectFit}
-        } size:{15, 15}];
+        CKComponent *imageComponent = CK::ImageComponentBuilder()
+            .image(reactionImage)
+            .attributes({
+                {@selector(setContentMode:), UIViewContentModeScaleAspectFit}
+            })
+            .size({15, 15})
+            .build();
 
         [imageComponents addObject:imageComponent];
     }];
@@ -99,8 +104,8 @@
         {whoLikedFlexBoxComponent},
         {shareCommentsFlexBoxComponent}
     }];
-
-    return [super newWithComponent:[CKInsetComponent newWithInsets:{.top = 10, .bottom = 10, .left = 10, .right = 10} component:flexBoxComponent]];
+    
+    return [super newWithComponent:CK::InsetComponentBuilder().insets({.top = 10, .bottom = 10, .left = 10, .right = 10}).component(flexBoxComponent).build()];
 }
 
 @end

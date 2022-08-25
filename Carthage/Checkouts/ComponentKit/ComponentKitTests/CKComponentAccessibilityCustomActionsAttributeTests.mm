@@ -17,7 +17,9 @@
 #import <ComponentKit/CKCompositeComponent.h>
 #import <ComponentKit/CKComponentSubclass.h>
 
-@interface CKComponentAccessibilityCustomActionsAttributeTests : XCTestCase
+#import "CKComponentTestCase.h"
+
+@interface CKComponentAccessibilityCustomActionsAttributeTests : CKComponentTestCase
 @end
 
 @implementation CKComponentAccessibilityCustomActionsAttributeTests
@@ -25,13 +27,13 @@
 - (void)testCustomActionsAttribute
 {
   __block CKComponent *actionSender = nil;
-  
+
   CKComponent *controlComponent =
   CK::ComponentBuilder()
       .viewClass([UIView class])
       .attribute(CKComponentAccessibilityCustomActionsAttribute({{@"Test", @selector(testNoArgumentAction:)}}))
       .build();
-  
+
   CKTestActionComponent *outerComponent =
   [CKTestActionComponent
    newWithSingleArgumentBlock:^(CKComponent *sender, id context) { }
@@ -39,24 +41,24 @@
    primitiveArgumentBlock:^(CKComponent *sender, int value) { }
    noArgumentBlock:^(CKComponent *sender) { actionSender = sender; }
    component:controlComponent];
-  
+
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
-  
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
+
   UIAccessibilityCustomAction *action = controlComponent.viewContext.view.accessibilityCustomActions.firstObject;
   NSInvocation *invocation = [NSInvocation invocationWithMethodSignature:[action.target methodSignatureForSelector:action.selector]];
   invocation.selector = action.selector;
   [invocation invokeWithTarget:action.target];
   XCTAssert(actionSender == controlComponent, @"Sender should be the component with the attribute");
-  
+
   CKUnmountComponents(mountedComponents);
 }
 
 - (void)testCustomActionsOrderIsPreserved
 {
   __block CKComponent *actionSender = nil;
-  
+
   CKComponent *controlComponent =
   CK::ComponentBuilder()
       .viewClass([UIView class])
@@ -66,7 +68,7 @@
        {@"Test 3", @selector(testAction:context:)},
      }))
       .build();
-  
+
   CKTestActionComponent *outerComponent =
   [CKTestActionComponent
    newWithSingleArgumentBlock:^(CKComponent *sender, id context) { actionSender = sender; }
@@ -74,21 +76,21 @@
    primitiveArgumentBlock:^(CKComponent *sender, int value) { }
    noArgumentBlock:^(CKComponent *sender) { }
    component:controlComponent];
-  
+
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
-  
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
+
   UIAccessibilityCustomAction *action = [controlComponent.viewContext.view.accessibilityCustomActions objectAtIndex:2];
   XCTAssertEqualObjects(action.name, @"Test 3");
-  
+
   CKUnmountComponents(mountedComponents);
 }
 
 - (void)testCustomActionIsNotAddedForNullAction
 {
   __block CKComponent *actionSender = nil;
-  
+
   CKComponent *controlComponent =
   CK::ComponentBuilder()
       .viewClass([UIView class])
@@ -97,7 +99,7 @@
        {@"Test 2", @selector(testAction:context:)},
      }))
       .build();
-  
+
   CKTestActionComponent *outerComponent =
   [CKTestActionComponent
    newWithSingleArgumentBlock:^(CKComponent *sender, id context) { actionSender = sender; }
@@ -105,13 +107,13 @@
    primitiveArgumentBlock:^(CKComponent *sender, int value) { }
    noArgumentBlock:^(CKComponent *sender) { }
    component:controlComponent];
-  
+
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
-  
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
+
   XCTAssertEqual(controlComponent.viewContext.view.accessibilityCustomActions.count, 1);
-  
+
   CKUnmountComponents(mountedComponents);
 }
 

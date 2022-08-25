@@ -8,10 +8,6 @@
  *
  */
 
-#import <ComponentKit/CKDefines.h>
-
-#if CK_NOT_SWIFT
-
 #import <UIKit/UIKit.h>
 
 #import <ComponentKit/CKComponent.h>
@@ -22,4 +18,5 @@
 
 @end
 
-#endif
+#define CK_LAYOUT_COMPONENT_INIT_UNAVAILABLE CK_COMPONENT_INIT_UNAVAILABLE
+

@@ -37,15 +37,7 @@
     }
      children:subComponents];
 
-    CKInsetComponent *insetComponent =
-    [CKInsetComponent
-     newWithInsets:
-    {
-        .top = 5, .bottom = 5, .left = 10, .right = 10
-    }
-     component:flexBoxComponent];
-
-    return [super newWithComponent:insetComponent];
+    return [super newWithComponent:CK::InsetComponentBuilder().insets({.top = 5, .bottom = 5, .left = 10, .right = 10}).component(flexBoxComponent).build()];
 }
 
 @end

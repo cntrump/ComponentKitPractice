@@ -9,17 +9,8 @@
 
 
 - (void)scene:(UIScene *)scene willConnectToSession:(UISceneSession *)session options:(UISceneConnectionOptions *)connectionOptions {
-    _window = [[UIWindow alloc] initWithWindowScene:(UIWindowScene *)scene];
-
-    UICollectionViewFlowLayout *flowLayout = [[UICollectionViewFlowLayout alloc] init];
-    [flowLayout setScrollDirection:UICollectionViewScrollDirectionVertical];
-    [flowLayout setMinimumInteritemSpacing:0];
-    [flowLayout setMinimumLineSpacing:0];
-
-    ViewController *viewController = [[ViewController alloc] initWithCollectionViewLayout:flowLayout];
-    viewController.view.backgroundColor = [UIColor whiteColor];
-    _window.rootViewController = [[UINavigationController alloc] initWithRootViewController:viewController];
-    [_window makeKeyAndVisible];
+    _window = UIApplication.sharedApplication.delegate.window;
+    _window.windowScene = (UIWindowScene *)scene;
 }
 
 

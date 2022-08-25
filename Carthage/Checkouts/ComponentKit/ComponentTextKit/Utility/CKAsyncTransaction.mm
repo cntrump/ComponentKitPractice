@@ -8,9 +8,9 @@
  *
  */
 
-#import <ComponentKit/CKAsyncTransaction.h>
+#import <ComponentTextKit/CKAsyncTransaction.h>
 
-#import <ComponentKit/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 
 @interface CKAsyncTransactionOperation : NSObject
 - (id)initWithOperationCompletionBlock:(ck_async_transaction_operation_completion_block_t)operationCompletionBlock;
@@ -30,7 +30,7 @@
 
 - (void)dealloc
 {
-  CKAssertNil(_operationCompletionBlock, @"Should have been called and released before -dealloc");
+  RCAssertNil(_operationCompletionBlock, @"Should have been called and released before -dealloc");
 }
 
 - (void)callAndReleaseCompletionBlock:(BOOL)canceled
@@ -70,7 +70,7 @@
 - (void)dealloc
 {
   // Uncommitted transactions break our guarantees about releasing completion blocks on callbackQueue.
-  CKAssert(_state != CKAsyncTransactionStateOpen, @"Uncommitted CKAsyncTransactions are not allowed");
+  RCAssert(_state != CKAsyncTransactionStateOpen, @"Uncommitted CKAsyncTransactions are not allowed");
 }
 
 #pragma mark - Transaction Management
@@ -79,19 +79,19 @@
                              queue:(dispatch_queue_t)queue
                         completion:(ck_async_transaction_operation_completion_block_t)completion
 {
-  CKAssertMainThread();
-  CKAssert(_state == CKAsyncTransactionStateOpen, @"You can only add operations to open transactions");
+  RCAssertMainThread();
+  RCAssert(_state == CKAsyncTransactionStateOpen, @"You can only add operations to open transactions");
 
   [self _ensureTransactionData];
 
   CKAsyncTransactionOperation *operation = [[CKAsyncTransactionOperation alloc] initWithOperationCompletionBlock:completion];
   [_operations addObject:operation];
   dispatch_group_async(_group, queue, ^{
-    if (_state != CKAsyncTransactionStateCanceled) {
-      dispatch_group_enter(_group);
+    if (self->_state != CKAsyncTransactionStateCanceled) {
+      dispatch_group_enter(self->_group);
       block(^(id<NSObject> value){
         operation.value = value;
-        dispatch_group_leave(_group);
+        dispatch_group_leave(self->_group);
       });
     }
   });
@@ -101,15 +101,15 @@
                         queue:(dispatch_queue_t)queue
                    completion:(ck_async_transaction_operation_completion_block_t)completion
 {
-  CKAssertMainThread();
-  CKAssert(_state == CKAsyncTransactionStateOpen, @"You can only add operations to open transactions");
+  RCAssertMainThread();
+  RCAssert(_state == CKAsyncTransactionStateOpen, @"You can only add operations to open transactions");
 
   [self _ensureTransactionData];
 
   CKAsyncTransactionOperation *operation = [[CKAsyncTransactionOperation alloc] initWithOperationCompletionBlock:completion];
   [_operations addObject:operation];
   dispatch_group_async(_group, queue, ^{
-    if (_state != CKAsyncTransactionStateCanceled) {
+    if (self->_state != CKAsyncTransactionStateCanceled) {
       operation.value = block();
     }
   });
@@ -117,24 +117,24 @@
 
 - (void)addCompletionBlock:(ck_async_transaction_completion_block_t)completion
 {
-  __weak typeof(self) weakSelf = self;
+  __weak __typeof(self) weakSelf = self;
   [self addOperationWithBlock:^(){return (id<NSObject>)nil;} queue:_callbackQueue completion:^(id<NSObject> value, BOOL canceled) {
-    typeof(self) strongSelf = weakSelf;
+    __typeof(self) strongSelf = weakSelf;
     completion(strongSelf, canceled);
   }];
 }
 
 - (void)cancel
 {
-  CKAssertMainThread();
-  CKAssert(_state != CKAsyncTransactionStateOpen, @"You can only cancel a committed or already-canceled transaction");
+  RCAssertMainThread();
+  RCAssert(_state != CKAsyncTransactionStateOpen, @"You can only cancel a committed or already-canceled transaction");
   _state = CKAsyncTransactionStateCanceled;
 }
 
 - (void)commit
 {
-  CKAssertMainThread();
-  CKAssert(_state == CKAsyncTransactionStateOpen, @"You cannot double-commit a transaction");
+  RCAssertMainThread();
+  RCAssert(_state == CKAsyncTransactionStateOpen, @"You cannot double-commit a transaction");
   _state = CKAsyncTransactionStateCommitted;
 
   if ([_operations count] == 0) {
@@ -143,14 +143,14 @@
       _completionBlock(self, NO);
     }
   } else {
-    CKAssert(_group != NULL, @"If there are operations, dispatch group should have been created");
+    RCAssert(_group != NULL, @"If there are operations, dispatch group should have been created");
     dispatch_group_notify(_group, _callbackQueue, ^{
-      BOOL isCanceled = (_state == CKAsyncTransactionStateCanceled);
-      for (CKAsyncTransactionOperation *operation in _operations) {
+      BOOL isCanceled = (self->_state == CKAsyncTransactionStateCanceled);
+      for (CKAsyncTransactionOperation *operation in self->_operations) {
         [operation callAndReleaseCompletionBlock:isCanceled];
       }
-      if (_completionBlock) {
-        _completionBlock(self, isCanceled);
+      if (self->_completionBlock) {
+        self->_completionBlock(self, isCanceled);
       }
     });
   }

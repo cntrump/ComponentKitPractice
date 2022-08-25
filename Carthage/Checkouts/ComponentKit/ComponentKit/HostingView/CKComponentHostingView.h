@@ -8,24 +8,24 @@
  *
  */
 
-#import <ComponentKit/CKDefines.h>
-
-#if CK_NOT_SWIFT
-
 #import <UIKit/UIKit.h>
 
-#import <ComponentKit/CKMacros.h>
+#import <ComponentKit/CKDefines.h>
+#import <ComponentKit/CKComponentHostingViewDelegate.h>
 #import <ComponentKit/CKComponentProvider.h>
+#import <ComponentKit/CKComponentSizeRangeProviding.h>
 #import <ComponentKit/CKUpdateMode.h>
 
-@protocol CKComponentHostingViewDelegate;
-@protocol CKComponentSizeRangeProviding;
+NS_ASSUME_NONNULL_BEGIN
 
 /** A view that renders a single component. */
+NS_SWIFT_NAME(ComponentHostingView)
 @interface CKComponentHostingView<__covariant ModelType: id<NSObject>, __covariant ContextType: id<NSObject>> : UIView
 
 /** Notified when the view's ideal size (measured by -sizeThatFits:) may have changed. */
 @property (nonatomic, weak) id<CKComponentHostingViewDelegate> delegate;
+
+#if CK_NOT_SWIFT
 
 /**
  Convenience initializer that uses default analytics listener
@@ -34,28 +34,36 @@
  @see CKComponentProvider
  @see CKComponentSizeRangeProviding
  */
-- (instancetype)initWithComponentProviderFunc:(CKComponent *(*)(ModelType model, ContextType context))componentProvider
+- (instancetype)initWithComponentProviderFunc:(CKComponent * _Nullable(* _Nonnull)(ModelType model, ContextType context))componentProvider
                             sizeRangeProvider:(id<CKComponentSizeRangeProviding>)sizeRangeProvider;
 
-/**
- This method is deprecated. Please use initWithComponentProviderFunc:sizeRangeProvider:
- */
-- (instancetype)initWithComponentProvider:(Class<CKComponentProvider>)componentProvider
-                        sizeRangeProvider:(id<CKComponentSizeRangeProviding>)sizeRangeProvider;
+#else
+
+typedef CKComponent * _Nullable(*CKComponentProviderFn)(ModelType _Nullable, ContextType _Nullable);
+
+- (instancetype)initWithComponentProvider:(CKComponentProviderFn)componentProvider
+                   sizeRangeProviderBlock:(CKComponentSizeRangeProviderBlock)sizeRangeProvider;
+
+#endif
 
 /** Updates the model used to render the component. */
-- (void)updateModel:(ModelType)model mode:(CKUpdateMode)mode;
+- (void)updateModel:(ModelType _Nullable)model mode:(CKUpdateMode)mode;
 
 /** Updates the context used to render the component. */
-- (void)updateContext:(ContextType)context mode:(CKUpdateMode)mode;
+- (void)updateContext:(ContextType _Nullable)context mode:(CKUpdateMode)mode;
 
 /** Appearance events to be funneled to the component tree. */
 - (void)hostingViewWillAppear;
 - (void)hostingViewDidDisappear;
 
-- (instancetype)init CK_NOT_DESIGNATED_INITIALIZER_ATTRIBUTE;
-- (instancetype)initWithFrame:(CGRect)frame CK_NOT_DESIGNATED_INITIALIZER_ATTRIBUTE;
+/** Updates the accessibility status. */
+- (void)updateAccessibilityStatus:(BOOL)accessibilityStatus mode:(CKUpdateMode)mode;
+
+CK_INIT_UNAVAILABLE;
+
+- (instancetype)initWithFrame:(CGRect)frame NS_UNAVAILABLE;
+- (instancetype)initWithCoder:(NSCoder *)coder NS_UNAVAILABLE;
 
 @end
 
-#endif
+NS_ASSUME_NONNULL_END

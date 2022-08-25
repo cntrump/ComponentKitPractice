@@ -19,39 +19,38 @@
 #import <ComponentKit/CKFlexboxComponent.h>
 #import <ComponentKitTestHelpers/CKTestRunLoopRunning.h>
 
-@interface CKComponentLayoutTestComponentController : CKComponentController
+@interface CKLayoutTestComponentController : CKComponentController
 @end
 
-@interface CKComponentLayoutTestComponent : CKComponent
+@interface CKLayoutTestComponent : CKComponent
 @end
-@implementation CKComponentLayoutTestComponent
-+ (instancetype)newWithView:(const CKComponentViewConfiguration &)view
-                       size:(const CKComponentSize &)size
+@implementation CKLayoutTestComponent
++ (instancetype)new
 {
   // Just a hack for the test as we don't really care about this scope id in this case.
   static int counter = 0;
   CKComponentScope scope (self, @(counter++));
-  return [super newWithView:view size:size];
+  return [super new];
 }
 + (Class<CKComponentControllerProtocol>)controllerClass
 {
-  return [CKComponentLayoutTestComponentController class];
+  return [CKLayoutTestComponentController class];
 }
 @end
 
-@implementation CKComponentLayoutTestComponentController
+@implementation CKLayoutTestComponentController
 @end
 
-@interface CKComponentLayoutTests : XCTestCase
+@interface CKLayoutTests : XCTestCase
 
 @end
 
-@implementation CKComponentLayoutTests
+@implementation CKLayoutTests
 
 - (void)testComputeRootLayout_WithCache_NoScope
 {
   __block NSArray<CKComponent *> *children;
-  __block CKFlexboxComponent *c;
+  __block CKComponent *c;
   CKBuildComponentResult results = CKBuildComponent(CKComponentScopeRootWithDefaultPredicates(nil, nil), {}, ^{
     children = createChildrenArray(NO);
     c = flexboxComponentWithScopedChildren(children);
@@ -62,7 +61,7 @@
 
   // Make sure the cache contains all the components that have component controller.
   for (id child in children) {
-    const CKComponentLayout cacheLayout = layout.cachedLayoutForComponent(child);
+    const RCLayout cacheLayout = layout.cachedLayoutForComponent(child);
     XCTAssertTrue(cacheLayout.component == nil);
   }
 }
@@ -70,7 +69,7 @@
 - (void)testComputeRootLayout_WithCache_WithScope
 {
   __block NSArray<CKComponent *> *children;
-  __block CKFlexboxComponent *c;
+  __block CKComponent *c;
   CKBuildComponentResult results = CKBuildComponent(CKComponentScopeRootWithDefaultPredicates(nil, nil), {}, ^{
     children = createChildrenArray(YES);
     c = flexboxComponentWithScopedChildren(children);
@@ -81,27 +80,29 @@
 
   // Make sure the cache contains all the components that have component controller.
   for (id child in children) {
-    const CKComponentLayout cacheLayout = layout.cachedLayoutForComponent(child);
+    const RCLayout cacheLayout = layout.cachedLayoutForComponent(child);
     XCTAssertTrue(cacheLayout.component == child);
   }
 }
 
 #pragma mark - Helpers
 
-static CKFlexboxComponent* flexboxComponentWithScopedChildren(NSArray<CKComponent *> *children) {
-
-  CKFlexboxComponent *c = CK::FlexboxComponentBuilder()
-                              .alignItems(CKFlexboxAlignItemsStart)
-                              .children(CK::map(children, [](CKComponent *child) -> CKFlexboxComponentChild { return {child}; }))
-                              .build();
-  return c;
+static CKComponent* flexboxComponentWithScopedChildren(NSArray<CKComponent *> *children) {
+  return CK::FlexboxComponentBuilder()
+      .alignItems(CKFlexboxAlignItemsStart)
+      .children(CK::map(
+          children,
+          [](CKComponent* child) -> CKFlexboxComponentChild {
+            return {child};
+          }))
+      .build();
 }
 
 static NSArray<CKComponent *>* createChildrenArray(BOOL scoped) {
   NSMutableArray<CKComponent *> *components = [NSMutableArray array];
   for (NSUInteger i=0; i<5; i++) {
     if (scoped) {
-      [components addObject:[CKComponentLayoutTestComponent newWithView:{} size:{}]];
+      [components addObject:[CKLayoutTestComponent new]];
     } else {
       [components addObject:CK::ComponentBuilder()
                                 .build()];

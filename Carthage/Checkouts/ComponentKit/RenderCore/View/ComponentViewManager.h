@@ -29,10 +29,20 @@
 @class CKComponent;
 
 typedef void (^CKOptimisticViewMutationTeardown)(UIView *v);
+typedef void (^CKOptimisticViewMutationOperation)(UIView *v);
+typedef id CKOptimisticMutationToken;
+constexpr id CKOptimisticMutationTokenNull = nil;
 
 namespace CK {
   namespace Component {
     struct MountAnalyticsContext;
+
+    struct OptimisticViewMutationInfo {
+      int serial;
+      CKOptimisticViewMutationOperation undo;
+      CKOptimisticViewMutationOperation apply;
+      CKOptimisticViewMutationOperation load;
+    };
 
     struct ViewKey {
       /**
@@ -72,12 +82,12 @@ namespace CK {
       ViewReusePool(ViewReusePool &&) = default;
 
       /** Unhides all views vended so far; hides others. Resets position to begin(). */
-      void reset(MountAnalyticsContext *mountAnalyticsContext);
+      void reset(MountAnalyticsContext *mountAnalyticsContext) noexcept;
 
-      UIView *viewForClass(const CKComponentViewClass &viewClass, UIView *container, MountAnalyticsContext *mountAnalyticsContext);
+      UIView *viewForClass(const CKComponentViewClass &viewClass, UIView *container, MountAnalyticsContext *mountAnalyticsContext) noexcept;
 
       /** Hide all views in viewpool of `view` and trigger `didHide` of descendant. */
-      static void hideAll(UIView *view, MountAnalyticsContext *mountAnalyticsContext);
+      static void hideAll(UIView *view, MountAnalyticsContext *mountAnalyticsContext) noexcept;
     private:
       std::vector<UIView *> pool;
       /** Points to the next view in pool that has *not* yet been vended. */
@@ -89,17 +99,16 @@ namespace CK {
 
     class ViewReusePoolMap {
     public:
-      static ViewReusePoolMap &viewReusePoolMapForView(UIView *view);
+      static ViewReusePoolMap &viewReusePoolMapForView(UIView *view) noexcept;
       ViewReusePoolMap();
 
       /** Resets each individual pool inside the map. */
-      void reset(UIView *container, MountAnalyticsContext *mountAnalyticsContext);
+      void reset(UIView *container, MountAnalyticsContext *mountAnalyticsContext) noexcept;
 
-      template <typename AccessibilityContext>
       UIView *viewForConfiguration(Class componentClass,
-                                   const CKViewConfiguration<AccessibilityContext> &config,
+                                   const CKViewConfiguration &config,
                                    UIView *container,
-                                   MountAnalyticsContext *mountAnalyticsContext)
+                                   MountAnalyticsContext *mountAnalyticsContext) noexcept
       {
         if (!config.viewClass().hasView()) {
           return nil;
@@ -116,13 +125,33 @@ namespace CK {
         return v;
       }
 
-      friend void ViewReusePool::hideAll(UIView *view, MountAnalyticsContext *mountAnalyticsContext);
+      friend void ViewReusePool::hideAll(UIView *view, MountAnalyticsContext *mountAnalyticsContext) noexcept;
     private:
       Dictionary<ViewKey, ViewReusePool> dictionary;
       std::vector<UIView *> vendedViews;
 
       ViewReusePoolMap(const ViewReusePoolMap&) = delete;
       ViewReusePoolMap &operator=(const ViewReusePoolMap&) = delete;
+    };
+
+    class AttributeApplicator {
+    public:
+      static void apply(UIView *view, const CKViewConfiguration &config) noexcept
+      {
+        applyAttributes(view, config.attributes());
+      }
+
+      /** Internal implementation detail of CKPerformOptimisticViewMutation; don't use this directly. */
+      static void addOptimisticViewMutationTeardown_Old(UIView *view, CKOptimisticViewMutationTeardown teardown) noexcept;
+      /** Internal implementation detail of CKPerformOptimisticViewMutation; don't use this directly. */
+      static CKOptimisticMutationToken addOptimisticViewMutation(UIView *view, CKOptimisticViewMutationOperation undo, CKOptimisticViewMutationOperation redo, CKOptimisticViewMutationOperation refresh) noexcept;
+      /** Internal implementation detail of CKPerformOptimisticViewMutation; don't use this directly. */
+      static void removeOptimisticViewMutation(CKOptimisticMutationToken token) noexcept;
+      /** Internal implementation detail of CKPerformOptimisticViewMutation; don't use this directly. */
+      static void resetOptimisticViewMutations(UIView *view) noexcept;
+
+    private:
+      static void applyAttributes(UIView *view, std::shared_ptr<const CKViewComponentAttributeValueMap> attributes) noexcept;
     };
 
     /**
@@ -143,9 +172,8 @@ namespace CK {
       UIView *const view;
 
       /** Returns a recycled or newly created subview for the given configuration. */
-      template <typename AccessibilityContext>
       UIView *viewForConfiguration(Class componentClass,
-                                   const CKViewConfiguration<AccessibilityContext> &config)
+                                   const CKViewConfiguration &config) noexcept
       {
         return viewReusePoolMap.viewForConfiguration(componentClass, config, view, mountAnalyticsContext);
       }
@@ -156,20 +184,6 @@ namespace CK {
 
       ViewManager(const ViewManager&) = delete;
       ViewManager &operator=(const ViewManager&) = delete;
-    };
-
-    class AttributeApplicator {
-    public:
-      template <typename AccessibilityContext>
-      static void apply(UIView *view, const CKViewConfiguration<AccessibilityContext> &config)
-      {
-        applyAttributes(view, config.attributes());
-      }
-
-      /** Internal implementation detail of CKPerformOptimisticViewMutation; don't use this directly. */
-      static void addOptimisticViewMutationTeardown(UIView *view, CKOptimisticViewMutationTeardown teardown);
-    private:
-      static void applyAttributes(UIView *view, std::shared_ptr<const CKViewComponentAttributeValueMap> attributes);
     };
   }
 }

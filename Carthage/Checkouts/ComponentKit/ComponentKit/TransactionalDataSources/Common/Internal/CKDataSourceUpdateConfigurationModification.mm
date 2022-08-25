@@ -21,7 +21,6 @@
 #import "CKComponentControllerHelper.h"
 #import "CKComponentLayout.h"
 #import "CKComponentProvider.h"
-#import "CKComponentScopeFrame.h"
 #import "CKComponentScopeRoot.h"
 #import "CKDataSourceModificationHelper.h"
 
@@ -61,19 +60,23 @@ using namespace CKComponentControllerHelper;
       [updatedIndexPaths addObject:[NSIndexPath indexPathForItem:itemIdx inSection:sectionIdx]];
       CKDataSourceItem *newItem;
       if (onlySizeRangeChanged) {
-        const auto rootLayout = CKComputeRootComponentLayout(item.rootLayout.component(), sizeRange, [item scopeRoot].analyticsListener);
+        const auto rootLayout = CKComputeRootComponentLayout(item.rootLayout.component(),
+                                                             sizeRange,
+                                                             [[item scopeRoot] analyticsListener],
+                                                             CK::none,
+                                                             [item scopeRoot]);
         newItem = [[CKDataSourceItem alloc] initWithRootLayout:rootLayout
                                                          model:[item model]
                                                      scopeRoot:[item scopeRoot]
                                                boundsAnimation:[item boundsAnimation]];
       } else {
         newItem = CKBuildDataSourceItem([item scopeRoot], {}, sizeRange, _configuration, [item model], context);
-        for (const auto componentController : addedControllersFromPreviousScopeRootMatchingPredicate(newItem.scopeRoot,
+        for (auto componentController : addedControllersFromPreviousScopeRootMatchingPredicate(newItem.scopeRoot,
                                                                                                      item.scopeRoot,
                                                                                                      &CKComponentControllerInitializeEventPredicate)) {
           [addedComponentControllers addObject:componentController];
         }
-        for (const auto componentController : removedControllersFromPreviousScopeRootMatchingPredicate(newItem.scopeRoot,
+        for (auto componentController : removedControllersFromPreviousScopeRootMatchingPredicate(newItem.scopeRoot,
                                                                                                        item.scopeRoot,
                                                                                                        &CKComponentControllerInvalidateEventPredicate)) {
           [invalidComponentControllers addObject:componentController];

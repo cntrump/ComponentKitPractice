@@ -55,7 +55,7 @@ static CKComponent *horizontalComponent() {
         }
     } size:{.height = 1}];
 
-    return [CKInsetComponent newWithInsets:{.top = 0, .bottom = 5, .left = 10, .right = 10} component:lineComponent];
+    return CK::InsetComponentBuilder().insets({.top = 0, .bottom = 5, .left = 10, .right = 10}).component(lineComponent).build();
 }
 
 @end

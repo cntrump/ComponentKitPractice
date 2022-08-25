@@ -165,6 +165,7 @@ namespace OptionalDetail {
 
     constexpr Storage() : HasValue<sizeof(T)>{false}, value{} {}
     Storage(const Storage &) = default;
+    Storage& operator=(const Storage&) = default;
 
     void clear() {
       this->hasValue = false;
@@ -704,6 +705,9 @@ template <typename T>
 auto operator!=(None, const Optional<T>& rhs) noexcept -> bool {
   return rhs.hasValue();
 }
+
+template <typename T>
+auto makeOptional(T &&value) { return Optional<T>{std::forward<T>(value)}; }
 
 } // namespace CK
 

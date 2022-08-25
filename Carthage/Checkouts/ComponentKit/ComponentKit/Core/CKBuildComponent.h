@@ -17,33 +17,56 @@
 #import <ComponentKit/CKBuildComponentResult.h>
 #import <ComponentKit/CKComponentScopeTypes.h>
 #import <ComponentKit/CKGlobalConfig.h>
+#import <ComponentKit/RCComponentCoalescingMode.h>
 
 @class CKComponentScopeRoot;
 @class CKComponent;
 
-namespace CKBuildComponentHelpers {
-  /**
-   Depending on the scope root and the list of state updates the proper build trigger is derived.
+/**
+ Used to derive the build trigger that issued a new component hierarchy.
 
-   @return The related build trigger given the in input parameters
-   */
-  auto getBuildTrigger(CKComponentScopeRoot *scopeRoot, const CKComponentStateUpdateMap &stateUpdates) -> CKBuildTrigger;
-}
+ @param scopeRoot The scope root that is associated with the component .hierarchy
+ @param stateUpdates A map of state updates that have accumulated since the last component generation was constructed.
+ @param treeEnvironmentChanged Indicates that the tree needs a complete reflow because env changed (results in ignoring all reuse optimizations).
+ @param treeHasPropsUpdate Indicates that the tree has some updated props.
+ @return The related build trigger given the in input parameters
+ */
+
+auto CKBuildComponentTrigger(CK::NonNull<CKComponentScopeRoot *> scopeRoot,
+                             const CKComponentStateUpdateMap &stateUpdates,
+                             BOOL treeEnvironmentChanged,
+                             BOOL treeHasPropsUpdate) -> CKBuildTrigger;
 
 /**
  Used to construct a component hierarchy. This is necessary to configure the thread-local state so that components
  can be properly connected to a scope root.
 
- @param previousRoot The previous scope root that was associated with the cell. May be nil if no prior root is available
+ @param previousRoot The previous scope root that was associated with the cell.
  @param stateUpdates A map of state updates that have accumulated since the last component generation was constructed.
  @param componentFactory A block that constructs your component. Must not be nil.
- @param enableComponentReuseOptimizations If `NO`, all the comopnents will be regenerated (no component reuse optimiztions). `YES` by default.
- @param mergeTreeNodesLinks if `YES`, the tree nodes tree will merge owner/parent based links.
  */
-CKBuildComponentResult CKBuildComponent(CKComponentScopeRoot *previousRoot,
+
+CKBuildComponentResult CKBuildComponent(CK::NonNull<CKComponentScopeRoot *> previousRoot,
                                         const CKComponentStateUpdateMap &stateUpdates,
-                                        CKComponent *(^componentFactory)(void),
-                                        BOOL enableComponentReuseOptimizations = YES,
-                                        BOOL mergeTreeNodesLinks = CKReadGlobalConfig().mergeTreeNodesLinks);
+                                        NS_NOESCAPE CKComponent *(^componentFactory)(void));
+
+
+/**
+ Used to construct a component hierarchy. This is necessary to configure the thread-local state so that components
+ can be properly connected to a scope root.
+
+ @param previousRoot The previous scope root that was associated with the cell.
+ @param stateUpdates A map of state updates that have accumulated since the last component generation was constructed.
+ @param componentFactory A block that constructs your component. Must not be nil.
+ @param buildTrigger An enum that indicates why the component tree has been (re)generated
+ @param reflowTrigger An enum that indicates why the components tree has been reflown.
+ @param coalescingMode Defines the coalescing mode to use for the current component tree.
+ */
+CKBuildComponentResult CKBuildComponent(CK::NonNull<CKComponentScopeRoot *> previousRoot,
+                                        const CKComponentStateUpdateMap &stateUpdates,
+                                        NS_NOESCAPE CKComponent *(^componentFactory)(void),
+                                        CKBuildTrigger buildTrigger,
+                                        CKReflowTrigger reflowTrigger,
+                                        RCComponentCoalescingMode coalescingMode = CKReadGlobalConfig().coalescingMode);
 
 #endif

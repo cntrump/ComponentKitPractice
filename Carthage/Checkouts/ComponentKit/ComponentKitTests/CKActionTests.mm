@@ -24,6 +24,8 @@
 #import <ComponentKit/CKComponentController.h>
 #import <ComponentKit/CKThreadLocalComponentScope.h>
 
+#import "CKComponentTestCase.h"
+
 @interface CKComponentActionTestAssertionHandler : NSAssertionHandler
 @end
 
@@ -63,7 +65,7 @@
 {
   CKComponentScope scope(self);
 
-  CKTestScopeActionComponent *c = [super newWithView:{} size:{}];
+  CKTestScopeActionComponent *c = [super new];
   if (c) {
     if (useComponentAsTarget) {
       c->_action = {c, @selector(actionMethod:context:)};
@@ -118,7 +120,7 @@
 {
   CKComponentScope scope(self);
 
-  CKTestControllerScopeActionComponent *c = [super newWithView:{} size:{}];
+  CKTestControllerScopeActionComponent *c = [super new];
   if (c) {
     if (useComponentAsTarget) {
       c->_action = {c, @selector(actionMethod:context:)};
@@ -170,7 +172,7 @@
 }
 @end
 
-@interface CKActionTests : XCTestCase
+@interface CKActionTests : CKComponentTestCase
 @end
 
 @implementation CKActionTests
@@ -190,7 +192,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   CKActionSend(@selector(testAction:context:), innerComponent, nil);
 
@@ -214,7 +216,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   id context = @"context";
 
@@ -241,7 +243,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   id context = @"context";
   id context2 = @"context2";
@@ -269,7 +271,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   int integer = 1337;
 
@@ -293,7 +295,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   std::vector<std::string> cppThing = {"hummus", "chips", "salad"};
   CKAction<const std::vector<std::string> &> action = { @selector(testCppArgumentAction:vector:) };
@@ -319,7 +321,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   CKAction<> action = { @selector(testNoArgumentAction:) };
   action.send(innerComponent);
@@ -344,7 +346,7 @@
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   CKAction<id> action = { @selector(testNoArgumentAction:) };
   action.send(innerComponent, @"hello");
@@ -377,7 +379,7 @@ static CKAction<> createDemotedWithReference(void (^callback)(CKComponent*, int)
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   id context = @"hello";
   id context2 = @"morty";
@@ -413,7 +415,7 @@ static CKAction<> createDemotedWithReference(void (^callback)(CKComponent*, int)
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   id context = @"hello";
   id context2 = @"morty";
@@ -450,7 +452,7 @@ static CKAction<> createDemotedWithReference(void (^callback)(CKComponent*, int)
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   CKActionSend(@selector(testAction:context:), innerComponent, nullptr);
 
@@ -483,7 +485,7 @@ static CKAction<> createDemotedWithReference(void (^callback)(CKComponent*, int)
 
   // Must be mounted to send actions:
   UIView *rootView = [UIView new];
-  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil).mountedComponents;
+  NSSet *mountedComponents = CKMountComponentLayout([outerComponent layoutThatFits:{} parentSize:{}], rootView, nil, nil);
 
   CKActionSend(@selector(testAction:context:), innerComponent, nil, CKActionSendBehaviorStartAtSender);
 
@@ -491,6 +493,60 @@ static CKAction<> createDemotedWithReference(void (^callback)(CKComponent*, int)
   XCTAssertTrue(innerReceivedTestAction, @"Inner component should have received action");
 
   [mountedComponents makeObjectsPerformSelector:@selector(unmount)];
+}
+
+- (void)testCombineTwoActionsWithNoArguments
+{
+  __block int action1CallCount = 0;
+  __block int action2CallCount = 0;
+
+  CKAction<> action1 = CKAction<>::actionFromBlock(^(CKComponent *) {
+     XCTAssert(action1CallCount == 0, @"No actions should have been called yet");
+     XCTAssert(action2CallCount == 0, @"No actions should have been called yet");
+     action1CallCount++;
+  });
+  CKAction<> action2 = CKAction<>::actionFromBlock(^(CKComponent *) {
+     XCTAssert(action1CallCount == 1, @"First action should be called before the second action");
+     XCTAssert(action2CallCount == 0, @"Second action shouldn't have been called yet");
+     action2CallCount++;
+  });
+
+  CKAction<>::combine(action1, action2).send([CKComponent new]);
+
+  XCTAssert(action1CallCount == 1, @"First action should have been called once");
+  XCTAssert(action2CallCount == 1, @"Second action should habe been called once");
+}
+
+- (void)testCombineThreeActionsWithNoArguments
+{
+  __block int action1CallCount = 0;
+  __block int action2CallCount = 0;
+  __block int action3CallCount = 0;
+
+  CKAction<> action1 = CKAction<>::actionFromBlock(^(CKComponent *) {
+     XCTAssert(action1CallCount == 0, @"No actions should have been called yet");
+     XCTAssert(action2CallCount == 0, @"No actions should have been called yet");
+     XCTAssert(action3CallCount == 0, @"No actions should have been called yet");
+     action1CallCount++;
+  });
+  CKAction<> action2 = CKAction<>::actionFromBlock(^(CKComponent *) {
+     XCTAssert(action1CallCount == 1, @"First action should be called before the second action");
+     XCTAssert(action2CallCount == 0, @"Second action shouldn't have been called yet");
+     XCTAssert(action3CallCount == 0, @"Third action shouldn't have been called yet");
+     action2CallCount++;
+  });
+  CKAction<> action3 = CKAction<>::actionFromBlock(^(CKComponent *) {
+     XCTAssert(action1CallCount == 1, @"First action should be called before the second action");
+     XCTAssert(action2CallCount == 1, @"Second action should be called before the third action");
+     XCTAssert(action3CallCount == 0, @"Third action shouldn't have been called yet");
+     action3CallCount++;
+  });
+
+  CKAction<>::combine(action1, action2, action3).send([CKComponent new]);
+
+  XCTAssert(action1CallCount == 1, @"First action should have been called once");
+  XCTAssert(action2CallCount == 1, @"Second action should have been called once");
+  XCTAssert(action3CallCount == 1, @"Third action should have been called once");
 }
 
 - (void)testTargetSelectorActionCallsOnTargetWithoutMounting
@@ -750,7 +806,7 @@ static CKAction<> createDemotedWithReference(void (^callback)(CKComponent*, int)
 
 - (void)testActionParamsFailedValidation
 {
-  // We need to set an assertion handler as `checkMethodSignatureAgainstTypeEncodings` throws `CKCFailAssert` in case it fails.
+  // We need to set an assertion handler as `checkMethodSignatureAgainstTypeEncodings` throws `RCCFailAssert` in case it fails.
   auto const assertionHandler = [CKComponentActionTestAssertionHandler new];
   [[[NSThread currentThread] threadDictionary] setValue:assertionHandler forKey:NSAssertionHandlerKey];
 

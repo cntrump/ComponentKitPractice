@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		15923CAE28B7779400570ABC /* ComponentKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E354C13824970A0D005F779E /* ComponentKit.framework */; };
+		15923CAF28B7779400570ABC /* ComponentTextKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 15923CA728B7777300570ABC /* ComponentTextKit.framework */; };
+		15923CB028B7779400570ABC /* RenderCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E354C14E24970A0D005F779E /* RenderCore.framework */; };
+		15923CB128B7779400570ABC /* yoga.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 15923CAB28B7777300570ABC /* yoga.framework */; };
 		E34B73AF24982B0D000DF7AB /* DescriptionComponent.mm in Sources */ = {isa = PBXBuildFile; fileRef = E34B73AE24982B0D000DF7AB /* DescriptionComponent.mm */; };
 		E34B73B224982CD8000DF7AB /* InnerComponent.mm in Sources */ = {isa = PBXBuildFile; fileRef = E34B73B124982CD8000DF7AB /* InnerComponent.mm */; };
 		E34B73B524982FDF000DF7AB /* ImageComponent.mm in Sources */ = {isa = PBXBuildFile; fileRef = E34B73B424982FDF000DF7AB /* ImageComponent.mm */; };
@@ -22,8 +26,6 @@
 		E354C0D024970127005F779E /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = E354C0CE24970127005F779E /* LaunchScreen.storyboard */; };
 		E354C0D324970127005F779E /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = E354C0D224970127005F779E /* main.m */; };
 		E354C0DD24970128005F779E /* ComponentKitPracticeTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E354C0DC24970128005F779E /* ComponentKitPracticeTests.m */; };
-		E354C15324970A1A005F779E /* ComponentKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E354C13824970A0D005F779E /* ComponentKit.framework */; };
-		E354C15424970A1A005F779E /* ComponentKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E354C13824970A0D005F779E /* ComponentKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E384A8AC249ACF3600567EC1 /* earth.png in Resources */ = {isa = PBXBuildFile; fileRef = E384A8AB249ACF3600567EC1 /* earth.png */; };
 		E384A8B1249AD13900567EC1 /* like_sup.png in Resources */ = {isa = PBXBuildFile; fileRef = E384A8AD249AD13800567EC1 /* like_sup.png */; };
 		E384A8B2249AD13900567EC1 /* like.png in Resources */ = {isa = PBXBuildFile; fileRef = E384A8AE249AD13800567EC1 /* like.png */; };
@@ -40,10 +42,6 @@
 		E384A8CB249AE54B00567EC1 /* coffee.png in Resources */ = {isa = PBXBuildFile; fileRef = E384A8CA249AE54B00567EC1 /* coffee.png */; };
 		E384DF732499A4130038615B /* ReactionCommentsComponent.mm in Sources */ = {isa = PBXBuildFile; fileRef = E384DF722499A4130038615B /* ReactionCommentsComponent.mm */; };
 		E384DF862499AAF60038615B /* love.png in Resources */ = {isa = PBXBuildFile; fileRef = E384DF832499AAF60038615B /* love.png */; };
-		E3D72C4C2497A6E800787AC8 /* CKSwift.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E354C15024970A0D005F779E /* CKSwift.framework */; };
-		E3D72C4D2497A6E800787AC8 /* CKSwift.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E354C15024970A0D005F779E /* CKSwift.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		E3D72C4E2497A6EF00787AC8 /* RenderCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E354C14E24970A0D005F779E /* RenderCore.framework */; };
-		E3D72C4F2497A6EF00787AC8 /* RenderCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E354C14E24970A0D005F779E /* RenderCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		E3D72C532497A9E100787AC8 /* PostsController.m in Sources */ = {isa = PBXBuildFile; fileRef = E3D72C522497A9E100787AC8 /* PostsController.m */; };
 		E3D72C562497AAED00787AC8 /* Post.m in Sources */ = {isa = PBXBuildFile; fileRef = E3D72C552497AAED00787AC8 /* Post.m */; };
 		E3D72C592497B00900787AC8 /* MainPostComponent.mm in Sources */ = {isa = PBXBuildFile; fileRef = E3D72C582497B00900787AC8 /* MainPostComponent.mm */; };
@@ -52,6 +50,34 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		15923CA628B7777300570ABC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E354C12424970A0C005F779E /* ComponentKit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D42B787A2517675100DAC4D5;
+			remoteInfo = ComponentTextKit;
+		};
+		15923CA828B7777300570ABC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E354C12424970A0C005F779E /* ComponentKit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = D42B78CF25176C4000DAC4D5;
+			remoteInfo = CKTextSwift;
+		};
+		15923CAA28B7777300570ABC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E354C12424970A0C005F779E /* ComponentKit.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 153B64C328B371E300C49565;
+			remoteInfo = yoga;
+		};
+		15923CAC28B7778300570ABC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E354C12424970A0C005F779E /* ComponentKit.xcodeproj */;
+			proxyType = 1;
+			remoteGlobalIDString = D42B76C52517675100DAC4D5;
+			remoteInfo = ComponentTextKit;
+		};
 		E354C0D924970128005F779E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = E354C0B524970125005F779E /* Project object */;
@@ -159,23 +185,8 @@
 		};
 /* End PBXContainerItemProxy section */
 
-/* Begin PBXCopyFilesBuildPhase section */
-		E354C11C249706D4005F779E /* Embed Frameworks */ = {
-			isa = PBXCopyFilesBuildPhase;
-			buildActionMask = 2147483647;
-			dstPath = "";
-			dstSubfolderSpec = 10;
-			files = (
-				E3D72C4D2497A6E800787AC8 /* CKSwift.framework in Embed Frameworks */,
-				E3D72C4F2497A6EF00787AC8 /* RenderCore.framework in Embed Frameworks */,
-				E354C15424970A1A005F779E /* ComponentKit.framework in Embed Frameworks */,
-			);
-			name = "Embed Frameworks";
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-/* End PBXCopyFilesBuildPhase section */
-
 /* Begin PBXFileReference section */
+		15923C8628B7634200570ABC /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		E34B73AD24982B0D000DF7AB /* DescriptionComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DescriptionComponent.h; sourceTree = "<group>"; };
 		E34B73AE24982B0D000DF7AB /* DescriptionComponent.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = DescriptionComponent.mm; sourceTree = "<group>"; };
 		E34B73B024982CD8000DF7AB /* InnerComponent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InnerComponent.h; sourceTree = "<group>"; };
@@ -239,9 +250,10 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				E3D72C4C2497A6E800787AC8 /* CKSwift.framework in Frameworks */,
-				E3D72C4E2497A6EF00787AC8 /* RenderCore.framework in Frameworks */,
-				E354C15324970A1A005F779E /* ComponentKit.framework in Frameworks */,
+				15923CAE28B7779400570ABC /* ComponentKit.framework in Frameworks */,
+				15923CAF28B7779400570ABC /* ComponentTextKit.framework in Frameworks */,
+				15923CB028B7779400570ABC /* RenderCore.framework in Frameworks */,
+				15923CB128B7779400570ABC /* yoga.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -307,6 +319,7 @@
 		E354C0EA2497069D005F779E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				15923C8628B7634200570ABC /* libc++.tbd */,
 				E354C12424970A0C005F779E /* ComponentKit.xcodeproj */,
 			);
 			name = Frameworks;
@@ -329,6 +342,9 @@
 				E354C14E24970A0D005F779E /* RenderCore.framework */,
 				E354C15024970A0D005F779E /* CKSwift.framework */,
 				E354C15224970A0D005F779E /* CKSwiftTests.xctest */,
+				15923CA728B7777300570ABC /* ComponentTextKit.framework */,
+				15923CA928B7777300570ABC /* CKTextSwift.framework */,
+				15923CAB28B7777300570ABC /* yoga.framework */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -420,11 +436,11 @@
 				E354C0B924970125005F779E /* Sources */,
 				E354C0BA24970125005F779E /* Frameworks */,
 				E354C0BB24970125005F779E /* Resources */,
-				E354C11C249706D4005F779E /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				15923CAD28B7778300570ABC /* PBXTargetDependency */,
 			);
 			name = ComponentKitPractice;
 			productName = ComponentKitPractice;
@@ -493,6 +509,27 @@
 /* End PBXProject section */
 
 /* Begin PBXReferenceProxy section */
+		15923CA728B7777300570ABC /* ComponentTextKit.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = ComponentTextKit.framework;
+			remoteRef = 15923CA628B7777300570ABC /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		15923CA928B7777300570ABC /* CKTextSwift.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = CKTextSwift.framework;
+			remoteRef = 15923CA828B7777300570ABC /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		15923CAB28B7777300570ABC /* yoga.framework */ = {
+			isa = PBXReferenceProxy;
+			fileType = wrapper.framework;
+			path = yoga.framework;
+			remoteRef = 15923CAA28B7777300570ABC /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
 		E354C13824970A0D005F779E /* ComponentKit.framework */ = {
 			isa = PBXReferenceProxy;
 			fileType = wrapper.framework;
@@ -664,6 +701,11 @@
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		15923CAD28B7778300570ABC /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			name = ComponentTextKit;
+			targetProxy = 15923CAC28B7778300570ABC /* PBXContainerItemProxy */;
+		};
 		E354C0DA24970128005F779E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = E354C0BC24970125005F779E /* ComponentKitPractice */;
@@ -733,7 +775,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
@@ -785,7 +827,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 13.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 9.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
@@ -803,6 +845,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = sampleProject.ComponentKitPractice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";
@@ -819,6 +862,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
+				OTHER_LDFLAGS = "-ObjC";
 				PRODUCT_BUNDLE_IDENTIFIER = sampleProject.ComponentKitPractice;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				TARGETED_DEVICE_FAMILY = "1,2";

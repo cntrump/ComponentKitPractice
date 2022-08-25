@@ -8,13 +8,11 @@
  *
  */
 
-#import <ComponentKit/CKDefines.h>
-
-#if CK_NOT_SWIFT
-
 #import <Foundation/Foundation.h>
 
 #import <ComponentKit/CKLayoutComponent.h>
+
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @uidocs https://fburl.com/CKRatioLayoutComponent:b4d0
@@ -36,12 +34,34 @@
  |_ _|
 
  **/
+NS_SWIFT_NAME(RatioLayoutComponent)
 @interface CKRatioLayoutComponent : CKLayoutComponent
 
+CK_INIT_UNAVAILABLE;
+
+CK_LAYOUT_COMPONENT_INIT_UNAVAILABLE;
+
+#if CK_SWIFT
+
+- (instancetype)initWithRatio:(CGFloat)ratio
+                    swiftSize:(RCComponentSize_SwiftBridge *_Nullable)swiftSize
+                    component:(CKComponent *)component NS_DESIGNATED_INITIALIZER;
+
+#else
+
+- (instancetype)initWithRatio:(CGFloat)ratio
+                         size:(const RCComponentSize &)size
+                    component:(CKComponent *_Nullable)component NS_DESIGNATED_INITIALIZER;
+
+// DEPRECATED - Do not use. Use CK::RatioLayoutComponentBuilder instead.
 + (instancetype)newWithRatio:(CGFloat)ratio
-                        size:(const CKComponentSize &)size
-                   component:(CKComponent *)component;
+                        size:(const RCComponentSize &)size
+                   component:(CKComponent *_Nullable)component;
+
+#endif
 
 @end
 
-#endif
+NS_ASSUME_NONNULL_END
+
+#import <ComponentKit/RatioLayoutComponentBuilder.h>

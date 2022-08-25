@@ -23,7 +23,7 @@
 @interface CKCustomBaselineComponent : CKComponent
 
 + (instancetype)newWithView:(const CKComponentViewConfiguration &)view
-                       size:(const CKComponentSize &)size
+                       size:(const RCComponentSize &)size
                    baseline:(CGFloat)baseline;
 @end
 
@@ -33,7 +33,7 @@
 }
 
 + (instancetype)newWithView:(const CKComponentViewConfiguration &)view
-                       size:(const CKComponentSize &)size
+                       size:(const RCComponentSize &)size
                    baseline:(CGFloat)baseline
 {
   CKCustomBaselineComponent *c = [super newWithView:view size:size];
@@ -44,9 +44,9 @@
   return c;
 }
 
-- (CKComponentLayout)computeLayoutThatFits:(CKSizeRange)constrainedSize
+- (RCLayout)computeLayoutThatFits:(CKSizeRange)constrainedSize
 {
-  CKComponentLayout parentLayout = [super computeLayoutThatFits:constrainedSize];
+  RCLayout parentLayout = [super computeLayoutThatFits:constrainedSize];
   NSMutableDictionary *extra = parentLayout.extra ? [parentLayout.extra mutableCopy]: [NSMutableDictionary dictionary];
   extra[kCKComponentLayoutExtraBaselineKey] = @(_baseline);
   parentLayout.extra = extra;
@@ -128,21 +128,21 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
           .flexGrow(1)
           .flexShrink(1)
   .build();
-  
+
   static CKSizeRange kSize = {{500, 500}, {500, 500}};
   CKSnapshotVerifyComponent(c, kSize, nil);
 }
 
 - (void)testCorrectnessOfDeeplyNestedFlexboxHierarchies
 {
-  CKComponent *(^component)(UIColor *, const CKComponentSize &) = ^CKComponent *(UIColor *color, const CKComponentSize &size) {
+  CKComponent *(^component)(UIColor *, const RCComponentSize &) = ^CKComponent *(UIColor *color, const RCComponentSize &size) {
     return CK::ComponentBuilder()
             .viewClass([UIView class])
             .backgroundColor(color)
             .size(size)
             .build();
   };
-  CKFlexboxComponentChild(^leaf)(UIColor *, const CKComponentSize &) = ^CKFlexboxComponentChild (UIColor *color, const CKComponentSize &size) {
+  CKFlexboxComponentChild(^leaf)(UIColor *, const RCComponentSize &) = ^CKFlexboxComponentChild (UIColor *color, const RCComponentSize &size) {
     return {
       .component = component(color, size),
       .position = {
@@ -152,7 +152,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
   };
   BOOL useDeepYogaTrees = _useDeepYogaTrees;
 
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:{}
    size:{500,500}
@@ -491,7 +491,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
   // width 0-INF; height 0-INF
   static CKSizeRange kAnySize = {{0, 0}, {INFINITY, INFINITY}};
 
-  CKFlexboxComponent *spacingBefore =
+  CKComponent *spacingBefore =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -515,7 +515,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }];
   CKSnapshotVerifyComponent(spacingBefore, kAnySize, @"spacingBefore");
 
-  CKFlexboxComponent *spacingAfter =
+  CKComponent *spacingAfter =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -539,7 +539,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }];
   CKSnapshotVerifyComponent(spacingAfter, kAnySize, @"spacingAfter");
 
-  CKFlexboxComponent *spacingBalancedOut =
+  CKComponent *spacingBalancedOut =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -570,7 +570,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
   // width 0-INF; height 0-INF
   static CKSizeRange kAnySize = {{0, 0}, {INFINITY, INFINITY}};
 
-  CKFlexboxComponent *spacingBefore =
+  CKComponent *spacingBefore =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -594,7 +594,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }];
   CKSnapshotVerifyComponent(spacingBefore, kAnySize, @"spacingBefore");
 
-  CKFlexboxComponent *spacingAfter =
+  CKComponent *spacingAfter =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -618,7 +618,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }];
   CKSnapshotVerifyComponent(spacingAfter, kAnySize, @"spacingAfter");
 
-  CKFlexboxComponent *spacingBalancedOut =
+  CKComponent *spacingBalancedOut =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -649,7 +649,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
   // width 0-INF; height 0-INF
   static CKSizeRange kAnySize = {{0, 0}, {INFINITY, INFINITY}};
 
-  CKFlexboxComponent *spacingBefore =
+  CKComponent *spacingBefore =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -673,7 +673,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }];
   CKSnapshotVerifyComponent(spacingBefore, kAnySize, @"spacingBefore");
 
-  CKFlexboxComponent *spacingAfter =
+  CKComponent *spacingAfter =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -697,7 +697,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }];
   CKSnapshotVerifyComponent(spacingAfter, kAnySize, @"spacingAfter");
 
-  CKFlexboxComponent *spacingBalancedOut =
+  CKComponent *spacingBalancedOut =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -725,7 +725,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testJustifiedCenterWithComponentSpacing
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -748,7 +748,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testZOrderNoChangeLayoutOrder
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -774,7 +774,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testZOrderPartialChangeLayoutOrder
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -800,7 +800,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testZOrderChangeLayoutOrder
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -831,7 +831,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
  */
 - (void)testMinWidthIsRespected
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{.width=120}
@@ -872,7 +872,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
  */
 - (void)testMinAndMaxWidthTakePriorityOverPreferredSize
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{.width=120}
@@ -900,7 +900,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
        }],
        .flexGrow = 1,
        .flexShrink = 0,
-       .flexBasis = CKRelativeDimension::Percent(0.5)
+       .flexBasis = RCRelativeDimension::Percent(0.5)
      },
    }];
 
@@ -910,7 +910,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testComponentThatChangesCrossSizeWhenMainSizeIsFlexed
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -921,14 +921,17 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }
    children:{
      {
-       [CKRatioLayoutComponent
-        newWithRatio:1.5
-        size:{}
-        component:
-        [CKComponent
-         newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor blueColor]}}}
-         size:{.height = 150}]],
-       .flexBasis = CKRelativeDimension::Percent(1),
+       CK::RatioLayoutComponentBuilder()
+       .ratio(1.5)
+       .component(
+         CK::ComponentBuilder()
+         .viewClass([UIView class])
+         .backgroundColor([UIColor blueColor])
+         .height(150)
+         .build()
+       )
+       .build(),
+       .flexBasis = RCRelativeDimension::Percent(1),
        .flexGrow = 1,
        .flexShrink = 1
      },
@@ -941,7 +944,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignContentStart
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -970,7 +973,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignContentEnd
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -999,7 +1002,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignContentCenter
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1028,7 +1031,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignContentSpaceBetween
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1057,7 +1060,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignContentSpaceAround
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1086,7 +1089,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignContentStretch
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1115,7 +1118,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignBaseline
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:{
      [UIView class],
@@ -1151,7 +1154,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testCustomBaselineComponent
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:{
      [UIView class],
@@ -1189,7 +1192,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testVariableBaselines
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:{
      [UIView class],
@@ -1231,7 +1234,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testContainerPadding
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1259,7 +1262,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testChildPadding
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1289,7 +1292,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPercentagePadding
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1302,10 +1305,10 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
      {
        [CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor blueColor]}}} size:{.minWidth = 20, .minHeight = 20}],
        .padding = {
-         .start = CKRelativeDimension::Percent(0.4),
-         .end = CKRelativeDimension::Percent(0.2),
-         .top = CKRelativeDimension::Percent(0.35),
-         .bottom = CKRelativeDimension::Percent(0.4),
+         .start = RCRelativeDimension::Percent(0.4),
+         .end = RCRelativeDimension::Percent(0.2),
+         .top = RCRelativeDimension::Percent(0.35),
+         .bottom = RCRelativeDimension::Percent(0.4),
        },
      },
      {
@@ -1319,7 +1322,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testUnspecifiedPaddingIsSameAsZero
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1375,14 +1378,14 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
             .build())
         .build())
   .build();
-  
+
   static CKSizeRange kSize = {{0,0}, {INFINITY, INFINITY}};
   CKSnapshotVerifyComponent(c, kSize, nil);
 }
 
 - (void)testStandardMargins
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1410,7 +1413,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testMultipleMargins
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1448,7 +1451,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testMarginOverridesSpacing
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1490,7 +1493,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignSelfBaseline
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:{
      [UIView class],
@@ -1523,7 +1526,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignCenterWithFlexedMainDimension
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1549,7 +1552,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignCenterWithIndefiniteCrossDimension
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1574,7 +1577,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testBasicAbsolutePositioning
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1616,7 +1619,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPercentAbsolutePositioning
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1642,8 +1645,8 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
           {
             .position = {
               .type = CKFlexboxPositionTypeAbsolute,
-              .top = CKRelativeDimension::Percent(0.2),
-              .start = CKRelativeDimension::Percent(0.05),
+              .top = RCRelativeDimension::Percent(0.2),
+              .start = RCRelativeDimension::Percent(0.05),
             },
             .component =
             [CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor greenColor]}}} size:{50,50}]
@@ -1658,7 +1661,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testRightBottomAbsolutePositioning
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1684,8 +1687,8 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
           {
             .position = {
               .type = CKFlexboxPositionTypeAbsolute,
-              .right = CKRelativeDimension::Percent(0.2),
-              .bottom = CKRelativeDimension::Percent(0.2),
+              .right = RCRelativeDimension::Percent(0.2),
+              .bottom = RCRelativeDimension::Percent(0.2),
             },
             .component =
             [CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor greenColor]}}} size:{50,50}]
@@ -1700,7 +1703,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAbsolutePositionsDontOverrideFixedDimensions
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kLightGrayBackgroundView
    size:{}
@@ -1742,7 +1745,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignedStart
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1763,7 +1766,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignedEnd
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1784,7 +1787,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignedCenter
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1811,7 +1814,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
   // (UITableViewCell or UIScreen) so the width for the topmost node will
   // always be exact. To see the real world test case, refer to the
   // `testAlignedStretchCrossSizingWithFixedParentWidth`
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1822,7 +1825,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    }
    children:{
      {[CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor redColor]}}}
-                          size:{.width = CKRelativeDimension::Percent(1.0), .height = 50}]},
+                          size:{.width = RCRelativeDimension::Percent(1.0), .height = 50}]},
      {[CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor greenColor]}}} size:{150, 150}], 20},
    }];
   static CKSizeRange kVariableSize = {{100, 100}, {200, 200}};
@@ -1844,7 +1847,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
     .child(CK::ComponentBuilder()
            .viewClass([UIView class])
            .backgroundColor([UIColor redColor])
-           .width(CKRelativeDimension::Percent(1.0))
+           .width(RCRelativeDimension::Percent(1.0))
            .height(50)
            .build())
     .child(CK::ComponentBuilder()
@@ -1855,15 +1858,15 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
            .build())
       .marginTop(20)
     .build();
-  
+
   const CKSizeRange kSize = {{200, 0}, {200, INFINITY}};
-  
+
   CKSnapshotVerifyComponent(c, kSize, nil);
 }
 
 - (void)testAlignedStretchNoChildExceedsMin
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1886,7 +1889,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testAlignedStretchOneChildExceedsMin
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1909,7 +1912,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testFixedFlexBasisAppliedWhenFlexingItems
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1947,7 +1950,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPercentageFlexBasisResolvesAgainstParentSize
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -1962,7 +1965,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
        .flexGrow = 1,
        // This should override the intrinsic size of 50pts and instead compute to 50% = 100pts.
        // The result should be that the red box is twice as wide as the blue and gree boxes after flexing.
-       .flexBasis = CKRelativeDimension::Percent(0.5)
+       .flexBasis = RCRelativeDimension::Percent(0.5)
      },
      {
        [CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor blueColor]}}} size:{50,50}],
@@ -1980,7 +1983,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testFixedFlexBasisOverridesIntrinsicSizeForNonFlexingChildren
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2013,10 +2016,11 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
   // If cross axis stretching occurred *before* flexing, then the blue child would be stretched to 3000 points tall.
   // Instead it should be stretched to 300 points tall, matching the red child and not overlapping the green inset.
   CKComponent *c =
-  [CKInsetComponent
-   newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor greenColor]}}}
-   insets:{10, 10, 10, 10}
-   component:
+  CK::InsetComponentBuilder()
+  .viewClass(UIView.class)
+  .backgroundColor(UIColor.greenColor)
+  .insets({10, 10, 10, 10})
+  .component(
    [CKFlexboxComponent
     newWithView:{}
     size:{}
@@ -2038,7 +2042,8 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
         .flexGrow = 1,
         .flexShrink = 1,
       },
-    }]];
+    }]
+  ).build();
 
   static CKSizeRange kSize = {{300, 0}, {300, INFINITY}};
   CKSnapshotVerifyComponent(c, kSize, nil);
@@ -2046,7 +2051,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedEqually
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2077,7 +2082,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedEquallyWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2108,7 +2113,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedProportionally
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2140,7 +2145,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedProportionallyWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2172,7 +2177,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedEquallyAmongMixedChildren
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2208,7 +2213,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedEquallyAmongMixedChildrenWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2244,7 +2249,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedProportionallyAmongMixedChildren
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2281,7 +2286,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testPositiveViolationIsDistributedProportionallyAmongMixedChildrenWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2318,7 +2323,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testRemainingViolationIsAppliedProperlyToFirstFlexibleChild
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2349,7 +2354,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testRemainingViolationIsAppliedProperlyToFirstFlexibleChildWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2380,7 +2385,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSize
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2411,7 +2416,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2442,7 +2447,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAndFlexFactor
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2474,7 +2479,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAndFlexFactorWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2506,7 +2511,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAmongMixedChildrenChildren
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2542,7 +2547,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAmongMixedChildrenWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2578,7 +2583,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAndFlexFactorAmongMixedChildren
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2615,7 +2620,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAndFlexFactorAmongMixedChildrenArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2652,7 +2657,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAndFlexFactorDoesNotShrinkToZero
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2684,7 +2689,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNegativeViolationIsDistributedBasedOnSizeAndFlexFactorDoesNotShrinkToZeroWithArbitraryFloats
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2716,7 +2721,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testNestedLayoutStretchDoesNotViolateWidth
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:{
      [UIView class],
@@ -2753,7 +2758,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 
 - (void)testSimultaneousFlexGrowAndAlignStretch
 {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{.height = 100}
@@ -2766,7 +2771,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
    children:{
      {
        // CKCompositeComponent is used just to verify that CKFlexboxComponent is actually
-       // laying out each child at the correct size, not just setting CKComponentLayout.size.
+       // laying out each child at the correct size, not just setting RCLayout.size.
        [CKCompositeComponent
         newWithComponent:
         [CKComponent
@@ -2804,7 +2809,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 - (void)test_uidocs_alignedStart
 {
   static CKSizeRange kSize = {{0,0}, {INFINITY, INFINITY}};
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2829,7 +2834,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 - (void)test_uidocs_alignedCenter
 {
   static CKSizeRange kSize = {{0,0}, {INFINITY, INFINITY}};
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2854,7 +2859,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 - (void)test_uidocs_alignedEnd
 {
   static CKSizeRange kSize = {{0,0}, {INFINITY, INFINITY}};
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2873,7 +2878,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 }
 
 - (void)testAspectRatioOneToOne {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2902,7 +2907,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 }
 
 - (void)testAspectRatioTwoToOne {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2931,7 +2936,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 }
 
 - (void)testAspectRatioOneToTwo {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2960,7 +2965,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 }
 
 - (void)testNegativeAspectRatioOneToOne {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -2989,7 +2994,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 }
 
 - (void)testMinAspectRatio {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -3018,7 +3023,7 @@ static CKComponentViewConfiguration kLightGrayBackgroundView = {
 }
 
 - (void)testDifferentAspectRatioPerChild {
-  CKFlexboxComponent *c =
+  CKComponent *c =
   [CKFlexboxComponent
    newWithView:kWhiteBackgroundView
    size:{}
@@ -3051,7 +3056,7 @@ static CKFlexboxComponentChild flexChild(CKComponent *c, CGFloat flexFactor)
   return {c, .flexGrow = flexFactor, .flexShrink = flexFactor};
 }
 
-- (CKFlexboxComponent *)_layoutWithJustify:(CKFlexboxJustifyContent)justify flexFactor:(NSInteger)flexFactor
+- (CKComponent *)_layoutWithJustify:(CKFlexboxJustifyContent)justify flexFactor:(NSInteger)flexFactor
 {
   return
   [CKFlexboxComponent
@@ -3068,39 +3073,6 @@ static CKFlexboxComponentChild flexChild(CKComponent *c, CGFloat flexFactor)
      flexChild([CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor blueColor]}}} size:{50,50}], flexFactor),
      flexChild([CKComponent newWithView:{[UIView class], {{@selector(setBackgroundColor:), [UIColor greenColor]}}} size:{50,50}], flexFactor),
    }];
-}
-
-- (void)testFlexChildWrappedWithCompositeComponent
-{
-  // This is a minimalistic test case that
-  // shows how wrapping a component with explicit size
-  // set with a CKCompositeComponent can result
-  // in an inconsistent layout.
-  // **Note** with deep yoga trees flag on
-  // we get the consistent behaviour as this
-  // scenario has been explicitely solved
-  auto const c = CK::FlexboxComponentBuilder()
-  .direction(CKFlexboxDirectionColumn)
-  .useDeepYogaTrees(_useDeepYogaTrees)
-  .skipCompositeComponentSize(false)
-  .child(CK::ComponentBuilder()
-          .viewClass([UIView class])
-          .backgroundColor([UIColor greenColor])
-          .width(200)
-          .height(200)
-          .build())
-  .child(CK::CompositeComponentBuilder()
-          .component(CK::ComponentBuilder()
-            .viewClass([UIView class])
-            .backgroundColor([UIColor redColor])
-            .width(200)
-            .height(200)
-            .build())
-          .build())
-  .build();
-  
-  static CKSizeRange kSize = {{400, 0}, {400, INFINITY}};
-  CKSnapshotVerifyComponent(c, kSize, nil);
 }
 
 @end

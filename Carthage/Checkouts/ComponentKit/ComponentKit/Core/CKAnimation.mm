@@ -12,12 +12,12 @@
 
 using namespace CK;
 
-auto Animation::TimingCurve::fromCA(NSString *name) -> TimingCurve
+auto Animation::TimingCurve::fromCA(NSString *name) noexcept -> TimingCurve
 {
   return fromCA([CAMediaTimingFunction functionWithName:name]);
 }
 
-auto Animation::TimingCurve::fromCA(CAMediaTimingFunction *f) -> TimingCurve
+auto Animation::TimingCurve::fromCA(CAMediaTimingFunction *f) noexcept -> TimingCurve
 {
   auto p1 = ControlPoint{};
   auto p2 = ControlPoint{};
@@ -66,6 +66,7 @@ auto Animation::FinalBuilder::toCA() const -> CAAnimation *
   a.toValue = _to;
   this->applyTimingTo(a);
   a.fillMode = kCAFillModeForwards;
+  a.removedOnCompletion = NO;
   return a;
 }
 
@@ -126,3 +127,4 @@ auto Animation::alpha() -> ChangeBuilder { return {@"opacity"}; }
 auto Animation::position() -> ChangeBuilder { return {@"position"}; };
 auto Animation::backgroundColor() -> ChangeBuilder { return {@"backgroundColor"}; }
 auto Animation::borderColor() -> ChangeBuilder { return {@"borderColor"}; }
+auto Animation::rotation() -> ChangeBuilder { return {@"transform.rotation"}; }

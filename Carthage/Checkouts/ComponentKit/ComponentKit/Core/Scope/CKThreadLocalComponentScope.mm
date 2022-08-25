@@ -13,12 +13,13 @@
 #import <pthread.h>
 #import <stack>
 
-#import <ComponentKit/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 #import <ComponentKit/CKAnalyticsListener.h>
 #import <ComponentKit/CKRootTreeNode.h>
+#import <ComponentKit/CKRenderHelpers.h>
 
 #import "CKComponentScopeRoot.h"
-#import "CKScopeTreeNode.h"
+#import "CKTreeNode.h"
 
 static pthread_key_t _threadKey() noexcept
 {
@@ -38,27 +39,71 @@ CKThreadLocalComponentScope *CKThreadLocalComponentScope::currentScope() noexcep
 CKThreadLocalComponentScope::CKThreadLocalComponentScope(CKComponentScopeRoot *previousScopeRoot,
                                                          const CKComponentStateUpdateMap &updates,
                                                          CKBuildTrigger trigger,
-                                                         BOOL merge)
-: newScopeRoot([previousScopeRoot newRoot]), stateUpdates(updates), stack(), systraceListener(previousScopeRoot.analyticsListener.systraceListener), buildTrigger(trigger),  componentAllocations(0), mergeTreeNodesLinks(merge), previousScope(CKThreadLocalComponentScope::currentScope())
+                                                         BOOL shouldCollectTreeNodeCreationInformation,
+                                                         BOOL alwaysBuildRenderTree,
+                                                         RCComponentCoalescingMode coalescingMode,
+                                                         BOOL enforceCKComponentSubclasses,
+                                                         BOOL disableRenderToNilInCoalescedCompositeComponents)
+: newScopeRoot([previousScopeRoot newRoot]),
+  previousScopeRoot(previousScopeRoot),
+  stateUpdates(updates),
+  stack(),
+  systraceListener(previousScopeRoot.analyticsListener.systraceListener),
+  buildTrigger(trigger),
+  componentAllocations(0),
+  treeNodeDirtyIds(CKRender::treeNodeDirtyIdsFor(previousScopeRoot, stateUpdates, trigger)),
+  shouldCollectTreeNodeCreationInformation(shouldCollectTreeNodeCreationInformation),
+  coalescingMode(coalescingMode),
+  disableRenderToNilInCoalescedCompositeComponents(disableRenderToNilInCoalescedCompositeComponents),
+  enforceCKComponentSubclasses(enforceCKComponentSubclasses),
+  previousScope(CKThreadLocalComponentScope::currentScope())
 {
-  stack.push({newScopeRoot.rootNode.node(), previousScopeRoot.rootNode.node()});
+  stack.push({[newScopeRoot rootNode].node(), previousScopeRoot.rootNode.node()});
   keys.push({});
+  ancestorHasStateUpdate.push(NO);
   pthread_setspecific(_threadKey(), this);
 }
 
 CKThreadLocalComponentScope::~CKThreadLocalComponentScope()
 {
   stack.pop();
-  CKCAssert(stack.empty(), @"Didn't expect stack to contain anything in destructor");
-  CKCAssert(keys.size() == 1 && keys.top().empty(), @"Expected keys to be at initial state in destructor");
+  RCCAssert(stack.empty(), @"Didn't expect stack to contain anything in destructor");
+  RCCAssert(keys.size() == 1 && keys.top().empty(), @"Expected keys to be at initial state in destructor");
+  RCCAssert(ancestorHasStateUpdate.size() == 1 && ancestorHasStateUpdate.top() == NO, @"Expected ancestorHasStateUpdate to be at initial state in destructor");
   pthread_setspecific(_threadKey(), previousScope);
 }
 
-void CKThreadLocalComponentScope::markCurrentScopeWithRenderComponentInTree()
+void CKThreadLocalComponentScope::push(CKComponentScopePair scopePair, BOOL keysSupportEnabled) noexcept {
+  stack.push(std::move(scopePair));
+  if (keysSupportEnabled) {
+    keys.push({});
+  }
+}
+
+void CKThreadLocalComponentScope::push(CKComponentScopePair scopePair, BOOL keysSupportEnabled, BOOL ancestorHasStateUpdateValue) noexcept {
+  push(scopePair, keysSupportEnabled);
+  ancestorHasStateUpdate.push(ancestorHasStateUpdateValue);
+}
+
+void CKThreadLocalComponentScope::pop(BOOL keysSupportEnabled, BOOL ancestorStateUpdateSupportEnabled) noexcept {
+  stack.pop();
+  if (keysSupportEnabled) {
+    RCCAssert(
+        keys.top().empty(),
+        @"Expected keys to be cleared on pop");
+    keys.pop();
+  }
+
+  if (ancestorStateUpdateSupportEnabled) {
+    ancestorHasStateUpdate.pop();
+  }
+}
+
+void CKThreadLocalComponentScope::markCurrentScopeWithRenderComponentInTree() noexcept
 {
   CKThreadLocalComponentScope *currentScope = CKThreadLocalComponentScope::currentScope();
   if (currentScope != nullptr) {
-    currentScope->newScopeRoot.hasRenderComponentInTree = YES;
+    [currentScope->newScopeRoot setHasRenderComponentInTree:YES];
     // `markCurrentScopeWithRenderComponentInTree` is being called for every render component from the base constructor of `CKComponent`.
     // We can rely on this infomration to increase the `componentAllocations` counter.
     currentScope->componentAllocations++;

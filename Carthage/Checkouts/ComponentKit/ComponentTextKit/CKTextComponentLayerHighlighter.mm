@@ -10,12 +10,12 @@
 
 #import "CKTextComponentLayerHighlighter.h"
 
-#import <ComponentKit/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 
-#import <ComponentKit/CKHighlightOverlayLayer.h>
+#import <ComponentTextKit/CKHighlightOverlayLayer.h>
 
-#import <ComponentKit/CKTextKitRenderer+Positioning.h>
-#import <ComponentKit/CKTextKitRenderer.h>
+#import <ComponentTextKit/CKTextKitRenderer+Positioning.h>
+#import <ComponentTextKit/CKTextKitRenderer.h>
 
 #import "CKTextComponentLayer.h"
 
@@ -36,7 +36,7 @@
 
 - (void)setHighlightedRange:(NSRange)highlightedRange
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (!NSEqualRanges(_highlightedRange, highlightedRange)) {
     _highlightedRange = highlightedRange;
 

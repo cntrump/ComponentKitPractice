@@ -10,7 +10,11 @@
 
 #import "CKComponentBoundsAnimation+UICollectionView.h"
 
-#import <ComponentKit/CKAvailability.h>
+#import <RenderCore/RCAssert.h>
+#import <RenderCore/RCAvailability.h>
+#import <ComponentKit/CKComponent.h>
+#import <ComponentKit/CKNonNull.h>
+#import <ComponentKit/CKExceptionInfo.h>
 
 #import <vector>
 
@@ -81,7 +85,7 @@ void CKComponentBoundsAnimationApplyAfterCollectionViewBatchUpdates(id context, 
         }
         case UICollectionElementCategorySupplementaryView: {
           supplementaryElementIndexPathsToOriginalLayoutAttributes[indexPath] = attributes;
-          if (CK_AT_LEAST_IOS9 && CGRectIntersectsRect(attributes.frame, visibleRect)) {
+          if (RC_AT_LEAST_IOS9 && CGRectIntersectsRect(attributes.frame, visibleRect)) {
             UIView *snapshotView =
             [[collectionView supplementaryViewForElementKind:attributes.representedElementKind atIndexPath:indexPath] snapshotViewAfterScreenUpdates:NO];
             if (snapshotView) {
@@ -127,12 +131,27 @@ void CKComponentBoundsAnimationApplyAfterCollectionViewBatchUpdates(id context, 
     return;
   }
 
+  NSIndexPath *largestAnimatingVisibleElement = largestAnimatingVisibleElementForOriginalLayout(_indexPathsToOriginalLayoutAttributes, visibleRect);
+  if (largestAnimatingVisibleElement == nil) {
+    RCCWarnWithCategory(NO, animation.component.className, @"largestAnimatingVisibleElement cannot be nil since it will later be passed to [UICollectionView layoutAttributesForItemAtIndexPath:] which expects a non-null pointer.\nOriginal layout attrs by index path: %@\nVisible rect: %@", _indexPathsToOriginalLayoutAttributes, NSStringFromCGRect(visibleRect));
+    return;
+  }
+
+  [self doApplyBoundsAnimationToCollectionView:animation
+                                   visibleRect:visibleRect
+                largestAnimatingVisibleElement:CK::makeNonNull(largestAnimatingVisibleElement)];
+}
+
+- (void)doApplyBoundsAnimationToCollectionView:(const CKComponentBoundsAnimation &)animation
+                                   visibleRect:(CGRect)visibleRect
+                largestAnimatingVisibleElement:(CK::NonNull<NSIndexPath *>)largestAnimatingVisibleElement
+{
   // First, move the cells to their old positions without animation:
   NSMutableDictionary *indexPathsToAnimatingViews = [NSMutableDictionary dictionary];
   NSMutableDictionary *indexPathsToAnimatingSupplementaryViews = [NSMutableDictionary dictionary];
   NSMutableDictionary *indexPathsToSupplementaryElementKinds = [NSMutableDictionary dictionary];
   NSMutableArray *snapshotViewsToRemoveAfterAnimation = [NSMutableArray array];
-  NSIndexPath *largestAnimatingVisibleElement = largestAnimatingVisibleElementForOriginalLayout(_indexPathsToOriginalLayoutAttributes, visibleRect);
+
   [UIView performWithoutAnimation:^{
     [_indexPathsToOriginalLayoutAttributes enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *indexPath, UICollectionViewLayoutAttributes *attributes, BOOL *stop) {
       // If we're animating an item *out* of the collection view's visible bounds, we can't rely on animating a
@@ -159,7 +178,7 @@ void CKComponentBoundsAnimationApplyAfterCollectionViewBatchUpdates(id context, 
       }
     }];
     [_supplementaryElementIndexPathsToOriginalLayoutAttributes enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *indexPath, UICollectionViewLayoutAttributes *attributes, BOOL *stop) {
-      if (CK_AT_LEAST_IOS9 && CGRectIntersectsRect(visibleRect, [[_collectionView layoutAttributesForSupplementaryElementOfKind:attributes.representedElementKind atIndexPath:indexPath] frame])) {
+      if (RC_AT_LEAST_IOS9 && CGRectIntersectsRect(visibleRect, [[_collectionView layoutAttributesForSupplementaryElementOfKind:attributes.representedElementKind atIndexPath:indexPath] frame])) {
         UICollectionReusableView *supplementaryView = [_collectionView supplementaryViewForElementKind:attributes.representedElementKind atIndexPath:indexPath];
         if (supplementaryView) {
           [supplementaryView setBounds:attributes.bounds];
@@ -188,17 +207,17 @@ void CKComponentBoundsAnimationApplyAfterCollectionViewBatchUpdates(id context, 
   // Then move them back to their current positions with animation:
   void (^restore)(void) = ^{
     [indexPathsToAnimatingViews enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *indexPath, UIView *view, BOOL *stop) {
-      UICollectionViewLayoutAttributes *attributes = [_collectionView layoutAttributesForItemAtIndexPath:indexPath];
+      UICollectionViewLayoutAttributes *attributes = [self->_collectionView layoutAttributesForItemAtIndexPath:indexPath];
       [view setBounds:attributes.bounds];
       [view setCenter:attributes.center];
     }];
     [indexPathsToAnimatingSupplementaryViews enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *indexPath, UIView *view, BOOL *stop) {
       UICollectionViewLayoutAttributes *attributes =
-      [_collectionView layoutAttributesForSupplementaryElementOfKind:indexPathsToSupplementaryElementKinds[indexPath] atIndexPath:indexPath];
+      [self->_collectionView layoutAttributesForSupplementaryElementOfKind:indexPathsToSupplementaryElementKinds[indexPath] atIndexPath:indexPath];
       [view setBounds:attributes.bounds];
       [view setCenter:attributes.center];
     }];
-    [_collectionView setContentOffset:CGPointMake(_collectionView.contentOffset.x + contentOffsetAdjustment.x, _collectionView.contentOffset.y + contentOffsetAdjustment.y)];
+    [self->_collectionView setContentOffset:CGPointMake(self->_collectionView.contentOffset.x + contentOffsetAdjustment.x, self->_collectionView.contentOffset.y + contentOffsetAdjustment.y)];
   };
   void (^completion)(BOOL) = ^(BOOL finished){
     for (UIView *v in snapshotViewsToRemoveAfterAnimation) {
@@ -222,13 +241,13 @@ void CKComponentBoundsAnimationApplyAfterCollectionViewBatchUpdates(id context, 
 // @param collectionView The collection view the bounds change animation is being applied to.
 // @param visibleRect The visible portion of the collection-view's contents.
 // @return The minimum content offset to set on the collection-view that will keep the largest visible element still visible.
-static CGPoint contentOffsetAdjustmentToKeepElementInVisibleBounds(NSIndexPath *largestVisibleAnimatingElementIndexPath, NSDictionary *indexPathsToAnimatingViews, UICollectionView *collectionView, CGRect visibleRect)
+static CGPoint contentOffsetAdjustmentToKeepElementInVisibleBounds(CK::NonNull<NSIndexPath *> largestVisibleAnimatingElementIndexPath, NSDictionary *indexPathsToAnimatingViews, UICollectionView *collectionView, CGRect visibleRect)
 {
   CGPoint contentOffsetAdjustment = CGPointZero;
   BOOL largestVisibleElementWillExitVisibleRect = elementWillExitVisibleRect(largestVisibleAnimatingElementIndexPath, indexPathsToAnimatingViews, collectionView, visibleRect);
 
   if (largestVisibleElementWillExitVisibleRect) {
-    CGRect currentBounds = ((UIView *)indexPathsToAnimatingViews[largestVisibleAnimatingElementIndexPath]).bounds;
+    CGRect currentBounds = ((UIView *)indexPathsToAnimatingViews[largestVisibleAnimatingElementIndexPath.asNullable()]).bounds;
     CGRect destinationBounds = ((UICollectionViewLayoutAttributes *) [collectionView layoutAttributesForItemAtIndexPath:largestVisibleAnimatingElementIndexPath]).bounds;
 
     CGFloat deltaX = CGRectGetMaxX(destinationBounds) - CGRectGetMaxX(currentBounds);
@@ -242,7 +261,7 @@ static CGPoint contentOffsetAdjustmentToKeepElementInVisibleBounds(NSIndexPath *
 // @abstract Returns the index-path of largest element in the collection, inside the collection views visible bounds, as returned by the collection view's layout attributes.
 // @param indexPathToOriginalLayoutAttributes A dictionary mapping the indexpath of elements to their collection view layout attributes.
 // @param visibleRect  The visible portion of the collection-view's contents.
-static NSIndexPath* largestAnimatingVisibleElementForOriginalLayout(NSDictionary *indexPathToOriginalLayoutAttributes, CGRect visibleRect) {
+static NSIndexPath *largestAnimatingVisibleElementForOriginalLayout(NSDictionary *indexPathToOriginalLayoutAttributes, CGRect visibleRect) {
   __block CGRect largestSoFar = CGRectZero;
   __block NSIndexPath *prominentElementIndexPath = nil;
   [indexPathToOriginalLayoutAttributes enumerateKeysAndObjectsUsingBlock:^(NSIndexPath *indexPath, UICollectionViewLayoutAttributes *attributes, BOOL *stop) {
@@ -256,10 +275,20 @@ static NSIndexPath* largestAnimatingVisibleElementForOriginalLayout(NSDictionary
 }
 
 // Returns YES if the element is current visible, but will not be visible (will be animated off-screen) post animation.
-static BOOL elementWillExitVisibleRect(NSIndexPath *indexPath, NSDictionary *indexPathsToAnimatingViews, UICollectionView *collectionView, CGRect visibleRect)
+static BOOL elementWillExitVisibleRect(CK::NonNull<NSIndexPath *> indexPath, NSDictionary *indexPathsToAnimatingViews, UICollectionView *collectionView, CGRect visibleRect)
 {
-  UIView *animatingView = indexPathsToAnimatingViews[indexPath];
-  UICollectionViewLayoutAttributes *attributes = [collectionView layoutAttributesForItemAtIndexPath:indexPath];
+  UIView *animatingView = indexPathsToAnimatingViews[indexPath.asNullable()];
+
+  UICollectionViewLayoutAttributes *attributes = nil;
+  @try {
+    attributes = [collectionView layoutAttributesForItemAtIndexPath:indexPath];
+  } @catch (NSException *exception) {
+    CKExceptionInfoSetValueForKey(@"ck_index_path", ([NSString stringWithFormat: @"(%ld-%ld)", (long)[indexPath section], (long)[indexPath row]]));
+    CKExceptionInfoSetValueForKey(@"ck_cv_number_of_sections", ([NSString stringWithFormat:@"%ld", (long)[collectionView numberOfSections]]));
+    CKExceptionInfoSetValueForKey(@"ck_cv_number_of_items_in_section", ([NSString stringWithFormat:@"%ld", (long)[collectionView numberOfItemsInSection:[indexPath section]]]));
+    CKExceptionInfoSetValueForKey(@"ck_cv_visible_rect", NSStringFromCGRect(visibleRect));
+    [exception raise];
+  }
 
   BOOL isItemCurrentlyInVisibleRect = (CGRectIntersectsRect(visibleRect,animatingView.frame));
   BOOL willItemAnimateOffVisibleRect = !CGRectIntersectsRect(visibleRect, attributes.frame);

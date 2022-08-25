@@ -21,8 +21,8 @@
 
 namespace CK {
   static auto getScopeHandle(id<CKMountable> const c) {
-    const auto scopeHandle = objCForceCast<CKComponent>(c).scopeHandle;
-    CKCAssertNotNil(scopeHandle, @"Scope must be provided for component animation");
+    const auto scopeHandle = objCForceCast<CKComponent>(c).treeNode.scopeHandle;
+    RCCAssertNotNil(scopeHandle, @"Scope must be provided for component animation");
     return scopeHandle;
   }
   static auto isSameHandle(CKComponentScopeHandle *const h1, CKComponentScopeHandle *const &h2) { return h1.globalIdentifier == h2.globalIdentifier; };
@@ -52,9 +52,8 @@ namespace CK {
 
     return map(handlesForUpdatedComponents, [&](const auto &h){
       const auto prevHandle =
-      std::find_if(oldHandlesWithAnimationsFromPreviousComponent.begin(),
-                   oldHandlesWithAnimationsFromPreviousComponent.end(),
-                   [&](const auto &oldHandle) { return oldHandle.globalIdentifier == h.globalIdentifier; });
+      find_if(oldHandlesWithAnimationsFromPreviousComponent,
+              [&](const auto &oldHandle) { return oldHandle.globalIdentifier == h.globalIdentifier; });
       return ComponentTreeDiff::Pair { acquiredComponent(*prevHandle), acquiredComponent(h) };
     });
   }

@@ -18,6 +18,7 @@
 #import <ComponentKit/CKComponentScopeTypes.h>
 #import <ComponentKit/CKDataSourceConfiguration.h>
 #import <ComponentKit/CKDataSourceStateModifying.h>
+#import <ComponentKit/CKNonNull.h>
 
 @class CKComponentScopeRoot;
 @class CKDataSourceChangeset;
@@ -32,7 +33,7 @@ typedef NS_ENUM(NSUInteger, CKDataSourceChangesetModificationItemType) {
 
 @protocol CKDataSourceChangesetModificationItemGenerator
 
-- (CKDataSourceItem *)buildDataSourceItemForPreviousRoot:(CKComponentScopeRoot *)previousRoot
+- (CKDataSourceItem *)buildDataSourceItemForPreviousRoot:(CK::NonNull<CKComponentScopeRoot *>)previousRoot
                                             stateUpdates:(const CKComponentStateUpdateMap &)stateUpdates
                                                sizeRange:(const CKSizeRange &)sizeRange
                                            configuration:(CKDataSourceConfiguration *)configuration
@@ -47,14 +48,17 @@ typedef NS_ENUM(NSUInteger, CKDataSourceChangesetModificationItemType) {
 - (instancetype)initWithChangeset:(CKDataSourceChangeset *)changeset
                     stateListener:(id<CKComponentStateListener>)stateListener
                          userInfo:(NSDictionary *)userInfo
+                              qos:(CKDataSourceQOS)qos;
+
+- (instancetype)initWithChangeset:(CKDataSourceChangeset *)changeset
+                    stateListener:(id<CKComponentStateListener>)stateListener
+                         userInfo:(NSDictionary *)userInfo
                               qos:(CKDataSourceQOS)qos
-          shouldValidateChangeset:(BOOL)shouldValidateChangeset;
+                  treeLayoutCache:(std::shared_ptr<CKTreeLayoutCache>)treeLayoutCache;
 
 @property (nonatomic, readonly, strong) CKDataSourceChangeset *changeset;
 
 - (void)setItemGenerator:(id<CKDataSourceChangesetModificationItemGenerator>)itemGenerator;
-- (BOOL)shouldSortInsertedItems;
-- (BOOL)shouldSortUpdatedItems;
 
 @end
 

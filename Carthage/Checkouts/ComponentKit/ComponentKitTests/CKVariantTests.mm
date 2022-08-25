@@ -123,6 +123,17 @@ struct DestructionTracker {
   XCTAssertFalse(v3 == v4);
 }
 
+- (void)test_HasValue
+{
+  auto v = Variant<int, std::string>{};
+
+  XCTAssertFalse(v.hasValue());
+
+  v = std::string{"CK"};
+
+  XCTAssertTrue(v.hasValue());
+}
+
 struct Empty {};
 struct Loading {};
 struct Data {
@@ -193,6 +204,17 @@ static void parseInt(int& c) {
 
   // If the handler was called the value should have changed
   XCTAssertEqual(v, 43);
+}
+
+- (void)test_GettingTypeAtIndex
+{
+  Variant<int, std::string>::AlternativeAt<0> intVar = 3;
+  XCTAssertEqual(intVar, 3);
+  
+  Variant<int, std::string>::AlternativeAt<1> stringVar = "test";
+  XCTAssertEqual(stringVar, "test");
+  
+  // Variant<int, std::string>::AlternativeAt<2> invalidVar; this one fails at compile time
 }
 
 @end

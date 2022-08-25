@@ -10,8 +10,6 @@
 
 #import <ComponentKit/CKDefines.h>
 
-#if CK_NOT_SWIFT
-
 #import <Foundation/Foundation.h>
 
 #import <ComponentKit/CKComponentScopeTypes.h>
@@ -28,26 +26,21 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol CKComponentStateListener;
 @protocol CKComponentProtocol;
-@protocol CKTreeNodeProtocol;
 
 @interface CKComponentScopeHandle : NSObject
 
-/**
- This method looks to see if the currently defined scope matches that of the given component; if so it returns the
- handle corresponding to the current scope. Otherwise it returns nil.
- This is only meant to be called when constructing a component and as part of the implementation itself.
- */
-+ (instancetype)handleForComponent:(id<CKComponentProtocol>)component;
+#if CK_NOT_SWIFT
+
+- (instancetype)init NS_UNAVAILABLE;
 
 /** Creates a conceptually brand new scope handle */
 - (instancetype)initWithListener:(id<CKComponentStateListener> _Nullable)listener
                   rootIdentifier:(CKComponentScopeRootIdentifier)rootIdentifier
-                  componentClass:(Class<CKComponentProtocol>)componentClass
+               componentTypeName:(const char *)componentTypeName
                     initialState:(id _Nullable)initialState;
 
 /** Creates a new instance of the scope handle that incorporates the given state updates. */
-- (instancetype)newHandleWithStateUpdates:(const CKComponentStateUpdateMap &)stateUpdates
-                       componentScopeRoot:(CKComponentScopeRoot *)componentScopeRoot;
+- (instancetype)newHandleWithStateUpdates:(const CKComponentStateUpdateMap &)stateUpdates;
 
 /** Enqueues a state update to be applied to the scope with the given mode. */
 - (void)updateState:(id _Nullable (^)(id _Nullable))updateBlock
@@ -58,18 +51,30 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)replaceState:(id _Nullable)state;
 
 /** Informs the scope handle that it should complete its configuration. This will generate the controller */
-- (void)resolve;
+- (void)resolveInScopeRoot:(CKComponentScopeRoot *)scopeRoot;
 
-/** Acquire component, assert if the scope handle is wrong */
+/** Registers the component and its controller in the scope root */
+- (void)registerInScopeRoot:(CKComponentScopeRoot *)scopeRoot;
+
+/** Resolves the component and registers the component and its controller in the scope root */
+- (void)resolveAndRegisterInScopeRoot:(CKComponentScopeRoot *)scopeRoot;
+
+/** Acquire component if possible, assert if the scope handle is wrong */
+- (BOOL)acquireFromComponent:(id<CKComponentProtocol>)component;
+
+/** Force acquire component, assert if the scope handle is wrong */
 - (void)forceAcquireFromComponent:(id<CKComponentProtocol>)component;
 
+/** Clears the acquired component. Used in some cases for render to nil. */
+- (void)relinquishComponent;
+
 /**
- Should not be called until after handleForComponent:. The controller will assert (if assertions are compiled), and
+ Should not be called until after nodeForComponent(). The controller will assert (if assertions are compiled), and
  return nil until `resolve` is called.
  */
 @property (nonatomic, strong, readonly, nullable) id<CKComponentControllerProtocol> controller;
 
-@property (nonatomic, assign, readonly) Class<CKComponentProtocol> componentClass;
+@property (nonatomic, assign, readonly) const char* componentTypeName;
 
 @property (nonatomic, strong, readonly, nullable) id state;
 @property (nonatomic, assign, readonly) CKComponentScopeHandleIdentifier globalIdentifier;
@@ -77,14 +82,25 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, assign, readonly) CKTreeNodeIdentifier treeNodeIdentifier;
 
 /** The tree node of the acquired component. Setter should only be called *before* resolution. */
-@property (nonatomic, weak, nullable) id<CKTreeNodeProtocol> treeNode;
+@property (nonatomic, weak, nullable) CKTreeNode *treeNode;
 
 /**
  Provides a responder corresponding with this scope handle. The controller will assert if called before resolution.
  */
 @property (nonatomic, strong, readonly) CKScopedResponder *scopedResponder;
 
+#else
+
+/**
+ A scope handle without state / controller. Merely enough to trigger a state update.
+ */
+- (instancetype)newStatelessHandle;
+
+#endif
+
 @end
+
+#if CK_NOT_SWIFT
 
 template<>
 struct std::hash<CKComponentScopeHandle *>
@@ -104,12 +120,13 @@ struct std::equal_to<CKComponentScopeHandle *>
   }
 };
 
-typedef int32_t CKScopedResponderUniqueIdentifier;
+#endif
+
+NS_SWIFT_NAME(ScopedResponderKey)
 typedef int CKScopedResponderKey;
 
+NS_SWIFT_NAME(ScopedResponder)
 @interface CKScopedResponder : NSObject
-
-@property (nonatomic, readonly, assign) CKScopedResponderUniqueIdentifier uniqueIdentifier;
 
 /**
  Returns the key needed to access the responder at a later time.
@@ -124,5 +141,3 @@ typedef int CKScopedResponderKey;
 @end
 
 NS_ASSUME_NONNULL_END
-
-#endif

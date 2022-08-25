@@ -40,13 +40,14 @@ public:
    @param componentClass Always pass self.
    */
   CKComponentPerfScope(Class __unsafe_unretained componentClass) noexcept;
+  CKComponentPerfScope(id<CKSystraceListener> systraceListener, const char *componentTypeName) noexcept;
   ~CKComponentPerfScope();
 
 private:
   CKComponentPerfScope(const CKComponentPerfScope&) = delete;
   CKComponentPerfScope &operator=(const CKComponentPerfScope&) = delete;
   id<CKSystraceListener> _systraceListener;
-  Class _componentClass;
+  const char *_componentTypeName;
 };
 
 #endif

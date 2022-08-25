@@ -17,7 +17,7 @@
 #import <Foundation/Foundation.h>
 #import <ComponentKit/CKComponent.h>
 #import <ComponentKit/CKMountable.h>
-#import <ComponentKit/CKLayout.h>
+#import <ComponentKit/RCLayout.h>
 
 @protocol CKMountable;
 @protocol CKRenderComponentProtocol;
@@ -46,8 +46,8 @@
 
  Will be called only when systrace is enabled.
  */
-- (void)willBuildComponent:(Class)componentClass;
-- (void)didBuildComponent:(Class)componentClass;
+- (void)willBuildComponent:(const char *)componentTypeName;
+- (void)didBuildComponent:(const char *)componentTypeName;
 
 /**
  Called before/after layout a component.
@@ -62,8 +62,8 @@
 
   Will be called only when systrace is enabled.
 */
-- (void)willCheckShouldComponentUpdate:(id<CKRenderComponentProtocol>)component;
-- (void)didCheckShouldComponentUpdate:(id<CKRenderComponentProtocol>)component;
+- (void)willCheckShouldComponentUpdate:(const char *const)componentTypeName;
+- (void)didCheckShouldComponentUpdate:(const char *const)componentTypeName;
 
 @end
 

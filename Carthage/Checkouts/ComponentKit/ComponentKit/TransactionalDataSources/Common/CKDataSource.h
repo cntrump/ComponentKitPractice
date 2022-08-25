@@ -12,7 +12,7 @@
 
 #if CK_NOT_SWIFT
 
-#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
 
 #import <CoreGraphics/CGGeometry.h>
 
@@ -24,7 +24,6 @@
 @class CKDataSourceConfiguration;
 @class CKDataSourceState;
 
-@protocol CKComponentProvider;
 @protocol CKComponentStateListener;
 @protocol CKDataSourceListener;
 @protocol CKDataSourceStateModifying;
@@ -44,7 +43,7 @@ struct CKDataSourceViewport {
   CGPoint contentOffset;
 };
 
-/** Transforms an input of model objects into CKComponentLayouts. All methods and callbacks are main thread only. */
+/** Transforms an input of model objects into CKLayouts. All methods and callbacks are main thread only. */
 @interface CKDataSource : NSObject <CKComponentStateListener>
 
 /**
@@ -92,6 +91,11 @@ struct CKDataSourceViewport {
  Viewport metrics used for calculating items that are in the viewport, when changeset splitting is enabled.
  */
 - (void)setViewport:(CKDataSourceViewport)viewport;
+
+/**
+ Set this so that calling `UITraitCollection.currentTraitCollection` in component returns desired value.
+ */
+- (void)setTraitCollection:(UITraitCollection *)traitCollection;
 
 - (void)addListener:(id<CKDataSourceListener>)listener;
 - (void)removeListener:(id<CKDataSourceListener>)listener;

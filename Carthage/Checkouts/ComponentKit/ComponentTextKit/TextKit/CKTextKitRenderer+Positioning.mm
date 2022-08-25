@@ -12,10 +12,10 @@
 
 #import <CoreText/CoreText.h>
 
-#import <ComponentKit/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 
-#import <ComponentKit/CKTextKitContext.h>
-#import <ComponentKit/CKTextKitShadower.h>
+#import <ComponentTextKit/CKTextKitContext.h>
+#import <ComponentTextKit/CKTextKitShadower.h>
 
 static const CGFloat CKTextKitRendererGlyphTouchHitSlop = 5.0;
 static const CGFloat CKTextKitRendererTextCapHeightPadding = 1.3;
@@ -357,7 +357,7 @@ static const CGFloat CKTextKitRendererTextCapHeightPadding = 1.3;
   [self.context performBlockWithLockedTextKitComponents:^(NSLayoutManager *layoutManager, NSTextStorage *textStorage, NSTextContainer *textContainer) {
     // Bail on invalid range.
     if (NSMaxRange(textRange) > [textStorage length]) {
-      CKCFailAssert(@"Invalid range");
+      RCCFailAssert(@"Invalid range");
       return;
     }
 

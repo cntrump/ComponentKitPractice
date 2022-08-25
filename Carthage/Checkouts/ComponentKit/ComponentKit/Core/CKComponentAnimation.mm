@@ -20,8 +20,8 @@
 
 static CKComponentAnimationHooks hooksForCAAnimation(CKComponent *component, CAAnimation *originalAnimation, NSString *layerPath) noexcept
 {
-  CKCAssertNotNil(component, @"Component being animated must be non-nil");
-  CKCAssertNotNil(originalAnimation, @"Animation being added must be non-nil");
+  RCCAssertNotNil(component, @"Component being animated must be non-nil");
+  RCCAssertNotNil(originalAnimation, @"Animation being added must be non-nil");
 
   // Don't mutate the animation the component returned, in case it is a static or otherwise reused. (Also copy
   // immediately to protect against the *caller* mutating the animation after this point but before it's used.)
@@ -30,11 +30,11 @@ static CKComponentAnimationHooks hooksForCAAnimation(CKComponent *component, CAA
     .didRemount = [^(id context){
       CALayer *layer = layerPath ? [component.viewForAnimation valueForKeyPath:layerPath] : component.viewForAnimation.layer;
       if (auto const lp = layerPath) {
-        CKCAssertWithCategory(layer != nil, [component class],
-                              @"%@ has no mounted layer at key path %@, so it cannot be animated", [component class], lp);
+        RCCAssertWithCategory(layer != nil, [component className],
+                              @"%@ has no mounted layer at key path %@, so it cannot be animated", [component className], lp);
       } else {
-        CKCAssertWithCategory(layer != nil, [component class],
-                              @"%@ has no mounted layer, so it cannot be animated", [component class]);
+        RCCAssertWithCategory(layer != nil, [component className],
+                              @"%@ has no mounted layer, so it cannot be animated", [component className]);
       }
       NSString *key = [[NSUUID UUID] UUIDString];
       auto const animationAddTime = [layer convertTime:CACurrentMediaTime() fromLayer:nil];
@@ -58,9 +58,10 @@ static CKComponentAnimationHooks hooksForFinalUnmountAnimation(const CKComponent
   return CKComponentAnimationHooks {
     .willRemount = ^() {
       const auto viewForAnimation = [component viewForAnimation];
-      CKCAssertWithCategory(viewForAnimation != nil, [component class],
-                            @"Can't animate component without a view. Check if %@ has a view.", [component class]);
+      RCCAssertWithCategory(viewForAnimation != nil, [component className],
+                            @"Can't animate component without a view. Check if %@ has a view.", [component className]);
       const auto snapshotView = [viewForAnimation snapshotViewAfterScreenUpdates:NO];
+      snapshotView.layer.anchorPoint = viewForAnimation.layer.anchorPoint;
       snapshotView.frame = [viewForAnimation convertRect:viewForAnimation.bounds toView:hostView];
       snapshotView.userInteractionEnabled = NO;
       return snapshotView;

@@ -28,6 +28,8 @@ class __attribute__((__may_alias__)) CompositeComponentBuilder
       public BuilderBase<CompositeComponentBuilder, PropsBitmap> {
  public:
   CompositeComponentBuilder() = default;
+  CompositeComponentBuilder(const CK::ComponentSpecContext &context)
+      : BuilderBase<CompositeComponentBuilder, PropsBitmap>{context} { }
 
   ~CompositeComponentBuilder() = default;
 
@@ -91,12 +93,16 @@ class __attribute__((__may_alias__)) CompositeComponentBuilder
   }
 
  private:
-  CKComponentViewConfiguration _viewConfig;
+  CKComponentViewConfiguration _viewConfig{};
   CKComponent *_component;
 };
 }
 
-using CompositeComponentBuilder = BuilderDetails::CompositeComponentBuilder<>;
+using CompositeComponentBuilderEmpty = BuilderDetails::CompositeComponentBuilder<>;
+using CompositeComponentBuilderContext = BuilderDetails::CompositeComponentBuilder<BuilderDetails::BuilderBasePropId::context>;
+
+auto CompositeComponentBuilder() -> CompositeComponentBuilderEmpty;
+auto CompositeComponentBuilder(const CK::ComponentSpecContext& c) -> CompositeComponentBuilderContext;
 }
 
 #endif

@@ -17,9 +17,11 @@
 #import <ComponentKit/CKComponentInternal.h>
 #import <ComponentKit/CKCompositeComponent.h>
 
+#import "CKComponentTestCase.h"
+
 using CK::Component::ViewManager;
 
-@interface CKComponentViewManagerTests : XCTestCase
+@interface CKComponentViewManagerTests : CKComponentTestCase
 @end
 
 /** Overrides all subview related methods *except* addSubview: to throw. */
@@ -198,9 +200,10 @@ static UIView *imageViewFactory()
       .viewClass({[CKTestReusableView class], @selector(didEnterReusePool), nil})
       .build();
   CKComponent *component =
-  [CKCompositeComponent
-   newWithView:{{[CKTestReusableView class], @selector(didEnterReusePool), nil}}
-   component:childComponent];
+  CK::CompositeComponentBuilder()
+      .viewClass({[CKTestReusableView class], @selector(didEnterReusePool), nil})
+      .component(childComponent)
+      .build();
 
   UIView *container = [[UIView alloc] init];
   CK::Component::ViewReuseUtilities::mountingInRootView(container);

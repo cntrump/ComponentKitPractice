@@ -18,7 +18,7 @@
 
 #import <ComponentKit/CKComponent.h>
 #import <ComponentKit/CKAction.h>
-#import <ComponentKit/CKContainerWrapper.h>
+#import <ComponentKit/RCContainerWrapper.h>
 
 template <typename V>
 class CKButtonComponentStateMap {
@@ -62,9 +62,9 @@ struct CKButtonComponentOptions {
   /// Additional attributes for the underlying UIButton
   CKViewComponentAttributeValueMap attributes;
   /// Accessibility context for the button.
-  CKComponentAccessibilityContext accessibilityContext;
+  RCAccessibilityContext accessibilityContext;
   /// Size restrictions for the button.
-  CKComponentSize size;
+  RCComponentSize size;
   /// The inset or outset margins for the rectangle around the button's content.
   UIEdgeInsets contentEdgeInsets = UIEdgeInsetsZero;
   /// The inset or outset margins for the rectangle around the button's title text.
@@ -85,8 +85,10 @@ struct CKButtonComponentOptions {
  */
 @interface CKButtonComponent : CKComponent
 
-+ (instancetype)newWithAction:(const CKAction<UIEvent *>)action
-                      options:(const CKButtonComponentOptions &)options;
+CK_COMPONENT_INIT_UNAVAILABLE;
+
+- (instancetype)initWithAction:(const CKAction<UIEvent *>)action
+                       options:(const CKButtonComponentOptions &)options NS_DESIGNATED_INITIALIZER;
 
 @end
 

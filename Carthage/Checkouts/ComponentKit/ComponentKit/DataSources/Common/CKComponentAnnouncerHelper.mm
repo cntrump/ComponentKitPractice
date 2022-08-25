@@ -10,10 +10,12 @@
 
 #import "CKComponentAnnouncerHelper.h"
 
+#import <ComponentKit/CKCollection.h>
+
 namespace CK {
 
   // used by enumerating part of the code to get currently listeners
-  std::shared_ptr<const std::vector<__weak id>> Component::AnnouncerHelper::loadListeners(CKComponentAnnouncerBase *self) {
+  std::shared_ptr<const std::vector<__weak id>> Component::AnnouncerHelper::loadListeners(CKComponentAnnouncerBase *self) noexcept {
     return self->_listenerVector;
   }
 
@@ -41,9 +43,9 @@ namespace CK {
     return res;
   }
 
-  void Component::AnnouncerHelper::addListener(CKComponentAnnouncerBase *self, SEL s, id listener) {
+  void Component::AnnouncerHelper::addListener(CKComponentAnnouncerBase *self, SEL s, id listener) noexcept {
     if (self->_listenerVector) {
-      if (std::find(self->_listenerVector->begin(), self->_listenerVector->end(), listener) != self->_listenerVector->end()) {
+      if (CK::Collection::contains(*self->_listenerVector, listener)) {
         // Multiple notifications to the same listener are not allowed.
         return;
       }
@@ -60,7 +62,7 @@ namespace CK {
       storeListeners(self, newListeners);
     }
   }
-  void Component::AnnouncerHelper::removeListener(CKComponentAnnouncerBase *self, SEL s, id listener) {
+  void Component::AnnouncerHelper::removeListener(CKComponentAnnouncerBase *self, SEL s, id listener) noexcept {
     // if we don't have anything in the vector, do nothing
     if (!self->_listenerVector) {
       return;

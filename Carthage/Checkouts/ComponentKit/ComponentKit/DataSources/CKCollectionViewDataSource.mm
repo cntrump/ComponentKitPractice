@@ -63,7 +63,7 @@
 
 - (CKDataSourceState *)currentState
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   return _currentState;
 }
 
@@ -73,6 +73,7 @@
                   mode:(CKUpdateMode)mode
               userInfo:(NSDictionary *)userInfo
 {
+  [_componentDataSource setTraitCollection:_collectionView.traitCollection];
   [_componentDataSource applyChangeset:changeset
                                   mode:mode
                               userInfo:userInfo];
@@ -86,7 +87,7 @@ static void applyChangesToCollectionView(UICollectionView *collectionView,
 {
   [changes.updatedIndexPaths enumerateObjectsUsingBlock:^(NSIndexPath *indexPath, BOOL *stop) {
     if (CKCollectionViewDataSourceCell *cell = (CKCollectionViewDataSourceCell *) [collectionView cellForItemAtIndexPath:indexPath]) {
-      attachToCell(cell, [currentState objectAtIndexPath:indexPath], attachController, cellToItemMap, YES);
+      attachToCell(cell, [currentState objectAtIndexPath:indexPath], attachController, cellToItemMap);
     }
   }];
   [collectionView deleteItemsAtIndexPaths:[changes.removedIndexPaths allObjects]];
@@ -125,10 +126,10 @@ static void applyChangesToCollectionView(UICollectionView *collectionView,
     }
 
     void (^applyUpdatedState)(CKDataSourceState *) = ^(CKDataSourceState *updatedState) {
-      [_collectionView performBatchUpdates:^{
-        _currentState = updatedState;
+      [self->_collectionView performBatchUpdates:^{
+        self->_currentState = updatedState;
       } completion:^(BOOL finished) {
-        [_announcer dataSourceDidEndUpdates:self didModifyPreviousState:previousState withState:state byApplyingChanges:changes];
+        [self->_announcer dataSourceDidEndUpdates:self didModifyPreviousState:previousState withState:state byApplyingChanges:changes];
       }];
     };
 
@@ -150,9 +151,9 @@ static void applyChangesToCollectionView(UICollectionView *collectionView,
     CKComponentBoundsAnimationApply(boundsAnimation, ^{
       for (NSIndexPath *indexPath in changes.updatedIndexPaths) {
         CKDataSourceItem *item = [state objectAtIndexPath:indexPath];
-        CKCollectionViewDataSourceCell *cell = (CKCollectionViewDataSourceCell *)[_collectionView cellForItemAtIndexPath:indexPath];
+        CKCollectionViewDataSourceCell *cell = (CKCollectionViewDataSourceCell *)[self->_collectionView cellForItemAtIndexPath:indexPath];
         if (cell) {
-          attachToCell(cell, item, _attachController, _cellToItemMap, YES);
+          attachToCell(cell, item, self->_attachController, self->_cellToItemMap);
         }
       }
     }, nil);
@@ -167,7 +168,7 @@ static void applyChangesToCollectionView(UICollectionView *collectionView,
       // Update current state
       _currentState = state;
     } completion:^(BOOL finished){
-      [_announcer dataSourceDidEndUpdates:self didModifyPreviousState:previousState withState:state byApplyingChanges:changes];
+      [self->_announcer dataSourceDidEndUpdates:self didModifyPreviousState:previousState withState:state byApplyingChanges:changes];
     }];
   }
 }
@@ -200,7 +201,7 @@ static auto heightChange(CKDataSourceState *previousState, CKDataSourceState *st
   [removedSections enumerateIndexesUsingBlock:^(NSUInteger section, BOOL *stop) {
     [state enumerateObjectsInSectionAtIndex:section
                                  usingBlock:^(CKDataSourceItem *item, NSIndexPath *indexPath, BOOL *stop2) {
-      [_attachController detachComponentLayoutWithScopeIdentifier:[[item scopeRoot] globalIdentifier]];
+      [self->_attachController detachComponentLayoutWithScopeIdentifier:[[item scopeRoot] globalIdentifier]];
     }];
   }];
 }
@@ -222,6 +223,7 @@ static auto heightChange(CKDataSourceState *previousState, CKDataSourceState *st
 - (void)reloadWithMode:(CKUpdateMode)mode
               userInfo:(NSDictionary *)userInfo
 {
+  [_componentDataSource setTraitCollection:_collectionView.traitCollection];
   [_componentDataSource reloadWithMode:mode userInfo:userInfo];
 }
 
@@ -229,6 +231,7 @@ static auto heightChange(CKDataSourceState *previousState, CKDataSourceState *st
                        mode:(CKUpdateMode)mode
                    userInfo:(NSDictionary *)userInfo
 {
+  [_componentDataSource setTraitCollection:_collectionView.traitCollection];
   [_componentDataSource updateConfiguration:configuration mode:mode userInfo:userInfo];
 }
 
@@ -274,17 +277,15 @@ static NSString *const kReuseIdentifier = @"com.component_kit.collection_view_da
 static void attachToCell(CKCollectionViewDataSourceCell *cell,
                          CKDataSourceItem *item,
                          CKComponentAttachController *attachController,
-                         NSMapTable<UICollectionViewCell *, CKDataSourceItem *> *cellToItemMap,
-                         BOOL isUpdate = NO)
+                         NSMapTable<UICollectionViewCell *, CKDataSourceItem *> *cellToItemMap)
 {
   CKComponentAttachControllerAttachComponentRootLayout(
       attachController,
       {.layoutProvider = item,
-       .scopeIdentifier = item.scopeRoot.globalIdentifier,
+       .scopeIdentifier = [item.scopeRoot globalIdentifier],
        .boundsAnimation = item.boundsAnimation,
        .view = cell.rootView,
-       .analyticsListener = item.scopeRoot.analyticsListener,
-       .isUpdate = isUpdate});
+       .analyticsListener = [item.scopeRoot analyticsListener]});
   [cellToItemMap setObject:item forKey:cell];
 }
 
@@ -292,13 +293,13 @@ static void attachToCell(CKCollectionViewDataSourceCell *cell,
 
 - (void)setAllowTapPassthroughForCells:(BOOL)allowTapPassthroughForCells
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   _allowTapPassthroughForCells = allowTapPassthroughForCells;
 }
 
 - (void)setState:(CKDataSourceState *)state
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (_currentState == state) {
     return;
   }

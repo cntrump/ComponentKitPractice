@@ -16,7 +16,7 @@
 
 #import <UIKit/UIKit.h>
 
-#import <RenderCore/CKGeometryHelpers.h>
+#import <RenderCore/RCGeometryHelpers.h>
 #import <RenderCore/ComponentViewManager.h>
 
 namespace CK {
@@ -24,9 +24,9 @@ namespace CK {
 
     struct MountContext {
       /** Constructs a new mount context for the given view. */
-      static MountContext RootContext(UIView *v, MountAnalyticsContext *mAnalyticsContext = nullptr, BOOL isUpdate = NO) {
+      static MountContext RootContext(UIView *v, MountAnalyticsContext *mAnalyticsContext) noexcept {
         ViewReuseUtilities::mountingInRootView(v);
-        return MountContext(std::make_shared<ViewManager>(v, mAnalyticsContext), {0,0}, {}, NO, mAnalyticsContext, isUpdate);
+        return MountContext(std::make_shared<ViewManager>(v, mAnalyticsContext), {0,0}, {}, NO, mAnalyticsContext);
       }
 
       /** The view manager for the context. Components should be mounted using this view manager. */
@@ -39,31 +39,29 @@ namespace CK {
       BOOL shouldBlockAnimations;
       /** Mount analytics information */
       MountAnalyticsContext *mountAnalyticsContext;
-      /** Indicates whether the mount is due to an (state/props) update */
-      BOOL isUpdate;
 
       MountContext offset(const CGPoint p, const CGSize parentSize, const CGSize childSize) const {
         const UIEdgeInsets guide = adjustedGuide(layoutGuide, p, parentSize, childSize);
-        return MountContext(viewManager, position + p, guide, shouldBlockAnimations, mountAnalyticsContext, isUpdate);
+        return MountContext(viewManager, position + p, guide, shouldBlockAnimations, mountAnalyticsContext);
       };
 
       MountContext childContextForSubview(UIView *subview, const BOOL didBlockAnimations) const {
         ViewReuseUtilities::mountingInChildContext(subview, viewManager->view);
         const BOOL shouldBlockChildAnimations = shouldBlockAnimations || didBlockAnimations;
-        return MountContext(std::make_shared<ViewManager>(subview, mountAnalyticsContext), {0,0}, layoutGuide, shouldBlockChildAnimations, mountAnalyticsContext, isUpdate);
+        return MountContext(std::make_shared<ViewManager>(subview, mountAnalyticsContext), {0,0}, layoutGuide, shouldBlockChildAnimations, mountAnalyticsContext);
       };
 
     private:
-      MountContext(const std::shared_ptr<ViewManager> &m, const CGPoint p, const UIEdgeInsets l, const BOOL b, MountAnalyticsContext *ma, BOOL up)
-      : viewManager(m), position(p), layoutGuide(l), shouldBlockAnimations(b), mountAnalyticsContext(ma), isUpdate(up) {}
+      MountContext(const std::shared_ptr<ViewManager> &m, const CGPoint p, const UIEdgeInsets l, const BOOL b, MountAnalyticsContext *ma)
+      : viewManager(m), position(p), layoutGuide(l), shouldBlockAnimations(b), mountAnalyticsContext(ma) {}
 
       static UIEdgeInsets adjustedGuide(const UIEdgeInsets layoutGuide, const CGPoint offset,
-                                        const CGSize parentSize, const CGSize childSize) {
+                                        const CGSize parentSize, const CGSize childSize) noexcept {
         return {
-          .left = layoutGuide.left + offset.x,
           .top = layoutGuide.top + offset.y,
-          .right = layoutGuide.right + (parentSize.width - childSize.width) - offset.x,
+          .left = layoutGuide.left + offset.x,
           .bottom = layoutGuide.bottom + (parentSize.height - childSize.height) - offset.y,
+          .right = layoutGuide.right + (parentSize.width - childSize.width) - offset.x,
         };
       };
     };

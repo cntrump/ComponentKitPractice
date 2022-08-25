@@ -14,7 +14,7 @@
 #import "Constants.h"
 #import <ComponentKit/ComponentKit.h>
 
-@interface ViewController ()<CKComponentProvider, UICollectionViewDelegateFlowLayout>
+@interface ViewController ()<UICollectionViewDelegateFlowLayout>
 
 @end
 
@@ -57,7 +57,7 @@
     __weak typeof(self) weakSelf = self;
     dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
         __strong typeof(self) strongSelf = weakSelf;
-        [strongSelf->_dataSource applyChangeset:[self updatedChangeSet] mode:CKUpdateModeAsynchronous userInfo:nil];
+        [strongSelf->_dataSource applyChangeset:[strongSelf updatedChangeSet] mode:CKUpdateModeAsynchronous userInfo:nil];
     });
 }
 

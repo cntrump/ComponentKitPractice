@@ -11,7 +11,7 @@
 #import "CKDataSource.h"
 #import "CKDataSourceInternal.h"
 
-
+#import <ComponentKit/CKAnalyticsListener.h>
 #import <ComponentKit/CKMutex.h>
 #import <ComponentKit/CKRootTreeNode.h>
 
@@ -38,6 +38,113 @@
 #import "CKDataSourceUpdateConfigurationModification.h"
 #import "CKDataSourceUpdateStateModification.h"
 #import "CKSystraceScope.h"
+#import "CKTraitCollectionHelper.h"
+
+// If set to 1, CKDispatchQueueSerial uses NSThread when built with TSan.
+#define CKDISPATCHQUEUESERIAL_TSAN_WORKAROUND_ENABLED 1
+
+#if defined(__has_feature) && __has_feature(thread_sanitizer) && CKDISPATCHQUEUESERIAL_TSAN_WORKAROUND_ENABLED
+// TSan (ThreadSanitizer) build.
+// CKDispatchQueueSerial uses NSThread to execute submitted blocks.
+// NSThread has stack of size kBackgroundThreadStackSizeInBytes so that deep
+// recursive calls do not cause stack overflow.
+
+static const NSUInteger kBackgroundThreadStackSizeInBytes = 1024 * 1024 * 2; // 2 Mb.
+
+@implementation CKDispatchQueueSerial {
+  // Blocks (tasks) submitted for execution.
+  NSMutableArray<dispatch_block_t> *_blocks;
+
+  // Thread that is used to execute blocks.
+  NSThread *_thread;
+
+  // A semaphore that notifies the thread that new block is available.
+  dispatch_semaphore_t _sem;
+
+  // A queue that protects access to _blocks.
+  dispatch_queue_t _blocksQueue;
+}
+
+- (instancetype)initWithName:(const char *)name {
+  if (self = [super init]) {
+    _blocksQueue = dispatch_queue_create(name, DISPATCH_QUEUE_SERIAL);
+    _blocks = [NSMutableArray new];
+    _sem = dispatch_semaphore_create(0);
+    __weak __typeof(self) weakSelf = self;
+    if (@available(iOS 10.0, *)) {
+      _thread = [[NSThread alloc] initWithBlock:^{
+        for (;;) {
+          __strong __typeof(weakSelf) strongSelf = weakSelf;
+          if (!strongSelf) {
+            return;
+          }
+
+          // Wait for blocks.
+          dispatch_semaphore_wait(strongSelf->_sem, DISPATCH_TIME_FOREVER);
+
+          __block dispatch_block_t block;
+          dispatch_sync(strongSelf->_blocksQueue, ^{
+            if (_blocks.count == 0) {
+              return;
+            }
+            // Grab next block.
+            block = strongSelf->_blocks[0];
+            [strongSelf->_blocks removeObjectAtIndex:0];
+          });
+          if (block) {
+            block();
+          } else {
+            // CKDispatchQueueSerial was deallocated.
+            return;
+          }
+        }
+      }];
+      _thread.stackSize = kBackgroundThreadStackSizeInBytes;
+      [_thread start];
+    } else {
+      RCFailAssert(@"ComponentKit requires iOS 10 or higher when running under TSan.");
+    }
+  }
+  return self;
+}
+
+- (void)dispatchAsync:(dispatch_block_t)block {
+  dispatch_sync(_blocksQueue, ^{
+    [_blocks addObject:block];
+  });
+  dispatch_semaphore_signal(_sem);
+}
+
+- (void)dealloc {
+  // This will cause thread wake up and
+  dispatch_semaphore_signal(_sem);
+}
+
+@end
+
+#else
+// Regular build (without TSan).
+// CKDispatchQueueSerial is just a wrapper around dispatch_queue_t.
+
+@implementation CKDispatchQueueSerial {
+  dispatch_queue_t _queue;
+}
+
+- (instancetype)initWithName:(const char *)name {
+  if (self = [super init]) {
+    _queue = dispatch_queue_create(name, DISPATCH_QUEUE_SERIAL);
+  }
+  return self;
+}
+
+- (void)dispatchAsync:(dispatch_block_t)block {
+  dispatch_async(_queue, block);
+}
+
+@end
+
+#endif
+
 
 @interface CKDataSourceModificationPair : NSObject
 
@@ -60,10 +167,14 @@
   BOOL _processingAsynchronousModification;
   BOOL _shouldPauseStateUpdates;
   BOOL _isBackgroundMode;
-  dispatch_queue_t _workQueue;
+  CKDispatchQueueSerial *_workQueue;
+  
+  std::shared_ptr<CKTreeLayoutCache> _treeLayoutCache;
 
   CKDataSourceViewport _viewport;
   BOOL _changesetSplittingEnabled;
+
+  UITraitCollection *_traitCollection;
 }
 @end
 
@@ -76,17 +187,21 @@
 
 - (instancetype)initWithState:(CKDataSourceState *)state
 {
-  CKAssertNotNil(state, @"Initial state is required");
-  CKAssertNotNil(state.configuration, @"Configuration is required");
+  RCAssertNotNil(state, @"Initial state is required");
+  RCAssertNotNil(state.configuration, @"Configuration is required");
   if (self = [super init]) {
     const auto configuration = state.configuration;
     _state = state;
     _announcer = [[CKDataSourceListenerAnnouncer alloc] init];
 
-    _workQueue = dispatch_queue_create("org.componentkit.CKDataSource", DISPATCH_QUEUE_SERIAL);
+    _workQueue = [[CKDispatchQueueSerial alloc] initWithName:"org.componentkit.CKDataSource"];
     _pendingAsynchronousModifications = [NSMutableArray array];
     _changesetSplittingEnabled = configuration.options.splitChangesetOptions.enabled;
     [CKComponentDebugController registerReflowListener:self];
+    
+    if (CKReadGlobalConfig().enableLayoutCaching) {
+      _treeLayoutCache = std::make_shared<CKTreeLayoutCache>();
+    }
   }
   return self;
 }
@@ -111,7 +226,7 @@
 
 - (CKDataSourceState *)state
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   return _state;
 }
 
@@ -127,7 +242,7 @@
                    qos:(CKDataSourceQOS)qos
               userInfo:(NSDictionary *)userInfo
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
 
 #if CK_ASSERTIONS_ENABLED
   CKVerifyChangeset(changeset, _state, _pendingAsynchronousModifications);
@@ -158,7 +273,7 @@
                        mode:(CKUpdateMode)mode
                    userInfo:(NSDictionary *)userInfo
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   id<CKDataSourceStateModifying> modification =
   [[CKDataSourceUpdateConfigurationModification alloc] initWithConfiguration:configuration userInfo:userInfo];
   switch (mode) {
@@ -176,9 +291,10 @@
 - (void)reloadWithMode:(CKUpdateMode)mode
               userInfo:(NSDictionary *)userInfo
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
+  auto treeLayoutCacheCopy = _treeLayoutCache ? std::make_unique<CKTreeLayoutCache>(*_treeLayoutCache) : nullptr;
   id<CKDataSourceStateModifying> modification =
-  [[CKDataSourceReloadModification alloc] initWithUserInfo:userInfo];
+  [[CKDataSourceReloadModification alloc] initWithUserInfo:userInfo treeLayoutCache:std::move(treeLayoutCacheCopy)];
   switch (mode) {
     case CKUpdateModeAsynchronous:
       [self _enqueueModification:modification];
@@ -193,7 +309,7 @@
 
 - (BOOL)applyChange:(CKDataSourceChange *)change
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (![self verifyChange:change]) {
     return NO;
   }
@@ -203,7 +319,7 @@
 
 - (BOOL)verifyChange:(CKDataSourceChange *)change
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   // We don't check `_pendingAsynchronousModifications` here because we want pre-computed `CKDataSourceChange`
   // to have higher chance to be applied. Asynchronous modifications will be re-applied anyway if they fail.
   return change.previousState == _state;
@@ -211,7 +327,7 @@
 
 - (void)setViewport:(CKDataSourceViewport)viewport
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (!_changesetSplittingEnabled) {
     return;
   }
@@ -220,19 +336,19 @@
 
 - (void)addListener:(id<CKDataSourceListener>)listener
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   [_announcer addListener:listener];
 }
 
 - (void)removeListener:(id<CKDataSourceListener>)listener
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   [_announcer removeListener:listener];
 }
 
 - (void)setShouldPauseStateUpdates:(BOOL)shouldPauseStateUpdates
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   _shouldPauseStateUpdates = shouldPauseStateUpdates;
   if (!_shouldPauseStateUpdates) {
     [self _processStateUpdates];
@@ -241,20 +357,26 @@
 
 - (BOOL)shouldPauseStateUpdates
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   return _shouldPauseStateUpdates;
 }
 
 - (void)setIsBackgroundMode:(BOOL)isBackgroundMode
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   _isBackgroundMode = isBackgroundMode;
 }
 
 - (BOOL)isBackgroundMode
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   return _isBackgroundMode;
+}
+
+- (void)setTraitCollection:(UITraitCollection *)traitCollection
+{
+  RCAssertMainThread();
+  _traitCollection = [traitCollection copy];
 }
 
 #pragma mark - State Listener
@@ -265,7 +387,10 @@
                     metadata:(const CKStateUpdateMetadata &)metadata
                         mode:(CKUpdateMode)mode
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
+
+  [_state.configuration.analyticsListener didReceiveStateUpdateFromScopeHandle:handle
+                                                                rootIdentifier:rootIdentifier];
 
   if (_pendingAsynchronousStateUpdates.empty() && _pendingSynchronousStateUpdates.empty()) {
     dispatch_async(dispatch_get_main_queue(), ^{
@@ -280,6 +405,11 @@
   }
 }
 
++ (BOOL)requiresMainThreadAffinedStateUpdates
+{
+  return YES;
+}
+
 #pragma mark - CKComponentDebugReflowListener
 
 - (void)didReceiveReflowComponentsRequest
@@ -292,14 +422,14 @@
   __block NSIndexPath *ip = nil;
   __block id model = nil;
   [_state enumerateObjectsUsingBlock:^(CKDataSourceItem *item, NSIndexPath *indexPath, BOOL *stop) {
-    if (item.scopeRoot.rootNode.parentForNodeIdentifier(treeNodeIdentifier) != nil) {
+    if ([item.scopeRoot rootNode].parentForNodeIdentifier(treeNodeIdentifier) != nil) {
       ip = indexPath;
       model = item.model;
       *stop = YES;
     }
   }];
   if (ip != nil) {
-    const auto changeset = [[[CKDataSourceChangesetBuilder dataSourceChangeset] withUpdatedItems:@{ip: model}] build];
+    const auto changeset = [[[CKDataSourceChangesetBuilder dataSourceChangesetWithOriginName:@"ck_data_source"] withUpdatedItems:@{ip: model}] build];
     [self applyChangeset:changeset mode:CKUpdateModeSynchronous userInfo:@{}];
   }
 }
@@ -308,7 +438,7 @@
 
 - (void)_enqueueModification:(id<CKDataSourceStateModifying>)modification
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
 
   [_pendingAsynchronousModifications addObject:modification];
   if (_pendingAsynchronousModifications.count == 1) {
@@ -318,7 +448,7 @@
 
 - (void)_startAsynchronousModificationIfNeeded
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
 
   id<CKDataSourceStateModifying> modification = _pendingAsynchronousModifications.firstObject;
   if (!_processingAsynchronousModification && _pendingAsynchronousModifications.count > 0) {
@@ -328,20 +458,23 @@
      initWithModification:modification
      state:_state];
 
+    const auto traitCollection = _traitCollection;
     auto const asyncModification = CK::Analytics::willStartAsyncBlock(CK::Analytics::BlockName::DataSourceWillStartModification);
     dispatch_block_t block = blockUsingDataSourceQOS(^{
       CKSystraceScope modificationScope(asyncModification);
-      [self _applyModificationPair:modificationPair];
+      CKPerformWithCurrentTraitCollection(traitCollection, ^{
+        [self _applyModificationPair:modificationPair];
+      });
     }, [modification qos], _isBackgroundMode);
 
-    dispatch_async(_workQueue, block);
+    [_workQueue dispatchAsync:block];
   }
 }
 
 /** Returns the canceled matching modifications, in the order they would have been applied. */
 - (NSArray *)_cancelEnqueuedModificationsOfType:(Class)modificationType
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
 
   NSIndexSet *indexes = [_pendingAsynchronousModifications indexesOfObjectsPassingTest:^BOOL(id obj, NSUInteger idx, BOOL *stop) {
     return [obj isKindOfClass:modificationType];
@@ -354,25 +487,37 @@
 
 - (void)_synchronouslyApplyModification:(id<CKDataSourceStateModifying>)modification
 {
-  [_announcer dataSource:self willSyncApplyModificationWithUserInfo:[modification userInfo]];
-  [self _synchronouslyApplyChange:[modification changeFromState:_state] qos:modification.qos];
+  CKPerformWithCurrentTraitCollection(_traitCollection, ^{
+    [_announcer dataSource:self willSyncApplyModificationWithUserInfo:[modification userInfo]];
+    [self _synchronouslyApplyChange:[modification changeFromState:_state] qos:modification.qos];
+  });
 }
 
 - (void)_synchronouslyApplyChange:(CKDataSourceChange *)change qos:(CKDataSourceQOS)qos
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   CKDataSourceAppliedChanges *const appliedChanges = [change appliedChanges];
   CKDataSourceState *const previousState = _state;
   CKDataSourceState *const newState = [change state];
   _state = newState;
-
+  
   // Announce 'didInit'.
   for (CKComponentController *componentController in change.addedComponentControllers) {
     [componentController didInit];
   }
   for (NSIndexPath *insertedIndex in [appliedChanges insertedIndexPaths]) {
     CKDataSourceItem *insertedItem = [newState objectAtIndexPath:insertedIndex];
-    CKComponentScopeRootAnnounceControllerInitialization([insertedItem scopeRoot]);
+    const auto scopeRoot = [insertedItem scopeRoot];
+    CKComponentScopeRootAnnounceControllerInitialization(scopeRoot);
+    if (CKReadGlobalConfig().enableLayoutCaching) {
+      _treeLayoutCache->update([scopeRoot globalIdentifier], insertedItem.rootLayout.cache());
+    }
+  }
+  if (CKReadGlobalConfig().enableLayoutCaching) {
+    for (NSIndexPath *updatedIndex in [appliedChanges finalUpdatedIndexPaths]) {
+      CKDataSourceItem *updatedItem = [newState objectAtIndexPath:updatedIndex];
+      _treeLayoutCache->update([[updatedItem scopeRoot] globalIdentifier], updatedItem.rootLayout.cache());
+    }
   }
 
   // Announce 'invalidateController'.
@@ -383,10 +528,14 @@
     CKDataSourceItem *removedItem = [previousState objectAtIndexPath:removedIndex];
     CKComponentScopeRootAnnounceControllerInvalidation([removedItem scopeRoot]);
   }
+  [[appliedChanges removedSections] enumerateIndexesUsingBlock:^(NSUInteger idx, BOOL *) {
+    [previousState enumerateObjectsInSectionAtIndex:idx usingBlock:^(CKDataSourceItem *removedItem, NSIndexPath *, BOOL *) {
+      CKComponentScopeRootAnnounceControllerInvalidation([removedItem scopeRoot]);
+    }];
+  }];
 
   CKComponentUpdateComponentForComponentControllerWithIndexPaths(appliedChanges.finalUpdatedIndexPaths.allValues,
-                                                                 newState,
-                                                                 newState.configuration.options.updateComponentInControllerAfterBuild.valueOr(NO));
+                                                                 newState);
 
   [_announcer dataSource:self didModifyPreviousState:previousState withState:newState byApplyingChanges:appliedChanges];
 
@@ -420,7 +569,7 @@
 
 - (void)_processStateUpdates
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (_shouldPauseStateUpdates) {
     return;
   }
@@ -438,26 +587,28 @@
 
 - (id<CKDataSourceStateModifying>)_consumePendingSynchronousStateUpdates
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (_pendingSynchronousStateUpdates.empty()) {
     return nil;
   }
-
+    
+  auto treeLayoutCacheCopy = _treeLayoutCache ? std::make_unique<CKTreeLayoutCache>(*_treeLayoutCache) : nullptr;
   CKDataSourceUpdateStateModification *const modification =
-  [[CKDataSourceUpdateStateModification alloc] initWithStateUpdates:_pendingSynchronousStateUpdates];
+  [[CKDataSourceUpdateStateModification alloc] initWithStateUpdates:_pendingSynchronousStateUpdates treeLayoutCache:std::move(treeLayoutCacheCopy)];
   _pendingSynchronousStateUpdates.clear();
   return modification;
 }
 
 - (id<CKDataSourceStateModifying>)_consumePendingAsynchronousStateUpdates
 {
-  CKAssertMainThread();
+  RCAssertMainThread();
   if (_pendingAsynchronousStateUpdates.empty()) {
     return nil;
   }
-
+  
+  auto treeLayoutCacheCopy = _treeLayoutCache ? std::make_unique<CKTreeLayoutCache>(*_treeLayoutCache) : nullptr;
   CKDataSourceUpdateStateModification *const modification =
-  [[CKDataSourceUpdateStateModification alloc] initWithStateUpdates:_pendingAsynchronousStateUpdates];
+  [[CKDataSourceUpdateStateModification alloc] initWithStateUpdates:_pendingAsynchronousStateUpdates treeLayoutCache:std::move(treeLayoutCacheCopy)];
   _pendingAsynchronousStateUpdates.clear();
   return modification;
 }
@@ -476,12 +627,12 @@
     CKSystraceScope applyModificationScope(asyncApplyModification);
     // If the first object in _pendingAsynchronousModifications is not still the modification,
     // it may have been canceled; don't apply it.
-    if ([_pendingAsynchronousModifications firstObject] == modificationPair.modification && self->_state == modificationPair.state) {
-      [_pendingAsynchronousModifications removeObjectAtIndex:0];
+    if ([self->_pendingAsynchronousModifications firstObject] == modificationPair.modification && self->_state == modificationPair.state) {
+      [self->_pendingAsynchronousModifications removeObjectAtIndex:0];
       [self _synchronouslyApplyChange:change qos:modificationPair.modification.qos];
     }
 
-    _processingAsynchronousModification = NO;
+    self->_processingAsynchronousModification = NO;
     [self _startAsynchronousModificationIfNeeded];
   });
 }
@@ -491,20 +642,22 @@
                                                                          qos:(CKDataSourceQOS)qos
                                                          isDeferredChangeset:(BOOL)isDeferredChangeset
 {
+  auto treeLayoutCacheCopy = _treeLayoutCache ? std::make_unique<CKTreeLayoutCache>(*_treeLayoutCache) : nullptr;
   if (!isDeferredChangeset && _changesetSplittingEnabled) {
     return
     [[CKDataSourceSplitChangesetModification alloc] initWithChangeset:changeset
                                                         stateListener:self
                                                              userInfo:userInfo
                                                              viewport:_viewport
-                                                                  qos:qos];
+                                                                  qos:qos
+                                                      treeLayoutCache:std::move(treeLayoutCacheCopy)];
   } else {
     return
     [[CKDataSourceChangesetModification alloc] initWithChangeset:changeset
                                                    stateListener:self
                                                         userInfo:userInfo
                                                              qos:qos
-                                         shouldValidateChangeset:NO];
+                                                 treeLayoutCache:std::move(treeLayoutCacheCopy)];
   }
 }
 

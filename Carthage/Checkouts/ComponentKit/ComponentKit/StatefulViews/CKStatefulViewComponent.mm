@@ -12,13 +12,7 @@
 
 @implementation CKStatefulViewComponent
 
-+ (instancetype)newWithView:(const CKComponentViewConfiguration &)view size:(const CKComponentSize &)size
-{
-  [NSException raise:NSInvalidArgumentException format:@"Not designated initializer."];
-  return nil;
-}
-
-+ (instancetype)newWithSize:(const CKComponentSize &)size
++ (instancetype)newWithSize:(const RCComponentSize &)size
               accessibility:(const CKStatefulViewComponentAccessibility &)accessibility
 {
   // We need a component-created view in the hierarchy to serve as the stateful view's parent to ensure proper ordering.
@@ -31,6 +25,7 @@
             {
               .isAccessibilityElement = accessibility.isAccessibilityElement,
               .accessibilityLabel = accessibility.accessibilityLabel,
+              .accessibilityTraits = accessibility.accessibilityTraits,
             },
           }
                        size:size];

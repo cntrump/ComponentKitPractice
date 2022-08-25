@@ -7,6 +7,7 @@
 //
 
 #import "DescriptionComponent.h"
+#import <ComponentTextKit/ComponentTextKit.h>
 
 @implementation DescriptionComponent
 
@@ -27,7 +28,7 @@
         },
     }
      size:{ }];
-    return [super newWithComponent: [CKInsetComponent newWithInsets:{.top = 5, .bottom = 15, .left = 10, .right = 10} component:labelComponent]];
+    return [super newWithComponent: CK::InsetComponentBuilder().insets({.top = 5, .bottom = 15, .left = 10, .right = 10}).component(labelComponent).build()];
 }
 
 @end

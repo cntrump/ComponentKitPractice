@@ -13,38 +13,37 @@
 #import <pthread.h>
 #import <stack>
 
-#import <ComponentKit/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 #import <ComponentKit/CKComponent.h>
-#import <ComponentKit/CKStatelessComponent.h>
 
 using namespace CK::Component;
 
-static pthread_key_t kCKComponentLayoutContextThreadKey;
+static pthread_key_t kCKLayoutContextThreadKey;
 
 struct ThreadKeyInitializer {
-  static void destroyStack(LayoutContextValue *p) { delete p; }
-  ThreadKeyInitializer() { pthread_key_create(&kCKComponentLayoutContextThreadKey, (void (*)(void*))destroyStack); }
+  static void destroyStack(LayoutContextValue *p) noexcept { delete p; }
+  ThreadKeyInitializer() { pthread_key_create(&kCKLayoutContextThreadKey, (void (*)(void*))destroyStack); }
 };
 
 static LayoutContextValue &componentValue(id<CKSystraceListener> listener = nil)
 {
   static ThreadKeyInitializer threadKey;
-  LayoutContextValue *contexts = static_cast<LayoutContextValue *>(pthread_getspecific(kCKComponentLayoutContextThreadKey));
+  LayoutContextValue *contexts = static_cast<LayoutContextValue *>(pthread_getspecific(kCKLayoutContextThreadKey));
   if (!contexts) {
     contexts = new LayoutContextValue;
     if (listener) {
       contexts->systraceListener = listener;
     }
-    pthread_setspecific(kCKComponentLayoutContextThreadKey, contexts);
+    pthread_setspecific(kCKLayoutContextThreadKey, contexts);
   }
   return *contexts;
 }
 
 static void removeComponentStackForThisThread()
 {
-  LayoutContextValue *contexts = static_cast<LayoutContextValue *>(pthread_getspecific(kCKComponentLayoutContextThreadKey));
+  LayoutContextValue *contexts = static_cast<LayoutContextValue *>(pthread_getspecific(kCKLayoutContextThreadKey));
   ThreadKeyInitializer::destroyStack(contexts);
-  pthread_setspecific(kCKComponentLayoutContextThreadKey, nullptr);
+  pthread_setspecific(kCKLayoutContextThreadKey, nullptr);
 }
 
 LayoutContext::LayoutContext(CKComponent *c, CKSizeRange r) : component(c), sizeRange(r)
@@ -57,7 +56,7 @@ LayoutContext::LayoutContext(CKComponent *c, CKSizeRange r) : component(c), size
 LayoutContext::~LayoutContext()
 {
   auto &stack = componentValue().stack;
-  CKCAssert(stack.back() == this,
+  RCCAssert(stack.back() == this,
             @"Last component layout context %@ is not %@", stack.back()->component, component);
   stack.pop_back();
   if (stack.empty()) {
@@ -65,20 +64,23 @@ LayoutContext::~LayoutContext()
   }
 }
 
-const CK::Component::LayoutContextStack &LayoutContext::currentStack()
+const CK::Component::LayoutContextStack &LayoutContext::currentStack() noexcept
 {
   return componentValue().stack;
 }
 
 static auto componentClassString(CKComponent *component) -> NSString * {
-  if ([component isKindOfClass: [CKStatelessComponent class]]) {
-    return [[(CKStatelessComponent *)component identifier] stringByAppendingString:@" (CKStatelessComponent)"];
+  const auto className = component.className;
+  const auto componentClassString = NSStringFromClass(component.class);
+
+  if ([className isEqualToString:componentClassString]) {
+    return className;
   } else {
-    return NSStringFromClass([component class]);
+    return [NSString stringWithFormat:@"%@ (%@)", className, componentClassString];
   }
 }
 
-NSString *LayoutContext::currentStackDescription()
+NSString *LayoutContext::currentStackDescription() noexcept
 {
   const auto &stack = componentValue().stack;
   NSMutableString *s = [NSMutableString string];
@@ -96,7 +98,7 @@ NSString *LayoutContext::currentStackDescription()
   return s;
 }
 
-NSString *LayoutContext::currentRootComponentClassName()
+NSString *LayoutContext::currentRootComponentClassName() noexcept
 {
   const auto &stack = componentValue().stack;
   return stack.empty() ? @"" : componentClassString(stack[0]->component);

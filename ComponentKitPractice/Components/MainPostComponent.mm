@@ -21,30 +21,28 @@
      newWithPost: post
      andContext: context];
 
-    CKBackgroundLayoutComponent *backgroundComponent =
-    [CKBackgroundLayoutComponent
-     newWithComponent:innerComponent
-     background:
-     [CKComponent
-      newWithView:
-    {
-      [UIView class],
-      {
-        {
-            @selector(setBackgroundColor:), [UIColor whiteColor]
-        },
-        {
-            CKComponentViewAttribute::LayerAttribute(@selector(setCornerRadius:)), @0.0
-        }
-      }
-    }
-      size:{}]];
+    CKComponent *backgroundComponent = CK::BackgroundLayoutComponentBuilder()
+        .component(innerComponent)
+        .background([CKComponent
+                     newWithView:
+                   {
+                     [UIView class],
+                     {
+                       {
+                           @selector(setBackgroundColor:), [UIColor whiteColor]
+                       },
+                       {
+                           CKComponentViewAttribute::LayerAttribute(@selector(setCornerRadius:)), @0.0
+                       }
+                     }
+                   }
+                     size:{}])
+        .build();
 
-    CKInsetComponent *insetComponent =
-    [CKInsetComponent
-     newWithInsets:{.top = 10, .bottom = 10, .left = 10, .right = 10}
-     component:backgroundComponent
-     ];
+    CKComponent *insetComponent = CK::InsetComponentBuilder()
+        .insets({.top = 10, .bottom = 10, .left = 10, .right = 10})
+        .component(backgroundComponent)
+        .build();
 
     return [super newWithComponent:insetComponent];
 }

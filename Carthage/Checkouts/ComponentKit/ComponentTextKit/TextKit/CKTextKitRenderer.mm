@@ -10,12 +10,12 @@
 
 #import "CKTextKitRenderer.h"
 
-#import <ComponentKit/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 
-#import <ComponentKit/CKTextKitContext.h>
-#import <ComponentKit/CKTextKitShadower.h>
-#import <ComponentKit/CKTextKitTailTruncater.h>
-#import <ComponentKit/CKTextKitTruncating.h>
+#import <ComponentTextKit/CKTextKitContext.h>
+#import <ComponentTextKit/CKTextKitShadower.h>
+#import <ComponentTextKit/CKTextKitTailTruncater.h>
+#import <ComponentTextKit/CKTextKitTruncating.h>
 
 static NSCharacterSet *_defaultAvoidTruncationCharacterSet()
 {
@@ -101,7 +101,7 @@ static NSCharacterSet *_defaultAvoidTruncationCharacterSet()
 - (void)drawInContext:(CGContextRef)context bounds:(CGRect)bounds
 {
   // We add an assertion so we can track the rare conditions where a graphics context is not present
-  CKAssertNotNil(context, @"This is no good without a context.");
+  RCAssertNotNil(context, @"This is no good without a context.");
 
   CGRect shadowInsetBounds = [_shadower insetRectWithConstrainedRect:bounds];
 

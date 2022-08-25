@@ -40,7 +40,11 @@ BOOL CKComponentDidPrepareLayoutForComponentToControllerPredicate(id<CKComponent
 
 auto CKComponentHasAnimationsOnInitialMountPredicate(id<CKMountable> const c) -> BOOL
 {
-  return CKSubclassOverridesInstanceMethod([CKComponent class], [c class], @selector(animationsOnInitialMount));
+  if ([c.class isSubclassOfClass:[CKComponent class]]) {
+    return [(CKComponent *)c hasInitialMountAnimations];
+  } else {
+    return NO;
+  }
 }
 
 auto CKComponentHasAnimationsFromPreviousComponentPredicate(id<CKMountable> const c) -> BOOL
@@ -54,18 +58,22 @@ auto CKComponentHasAnimationsFromPreviousComponentPredicate(id<CKMountable> cons
 
 auto CKComponentHasAnimationsOnFinalUnmountPredicate(id<CKMountable> const c) -> BOOL
 {
-  return CKSubclassOverridesInstanceMethod([CKComponent class], [c class], @selector(animationsOnFinalUnmount));
+  if ([c.class isSubclassOfClass:[CKComponent class]]) {
+    return [(CKComponent *)c hasFinalUnmountAnimations];
+  } else {
+    return NO;
+  }
 }
 
-void CKComponentSendDidPrepareLayoutForComponent(CKComponentScopeRoot *scopeRoot, const CKComponentRootLayout &layout)
+void CKComponentSendDidPrepareLayoutForComponent(id<CKComponentScopeEnumeratorProvider> scopeEnumeratorProvider, const CKComponentRootLayout &layout)
 {
   // Iterate over the components that their controllers override the 'didPrepareLayoutForComponent' method.
-  [scopeRoot enumerateComponentsMatchingPredicate:&CKComponentDidPrepareLayoutForComponentToControllerPredicate
-                                            block:^(id<CKComponentProtocol> c) {
-                                              CKComponent *component = (CKComponent *)c;
-                                              const CKComponentLayout componentLayout = layout.cachedLayoutForComponent(component);
-                                              [component.controller didPrepareLayout:componentLayout forComponent:component];
-                                            }];
+  [scopeEnumeratorProvider enumerateComponentsMatchingPredicate:&CKComponentDidPrepareLayoutForComponentToControllerPredicate
+                                                          block:^(id<CKComponentProtocol> c) {
+    CKComponent *component = (CKComponent *)c;
+    const RCLayout componentLayout = layout.cachedLayoutForComponent(component);
+    [component.controller didPrepareLayout:componentLayout forComponent:component];
+  }];
 }
 
 void CKComponentSendDidPrepareLayoutForComponentsWithIndexPaths(id<NSFastEnumeration> indexPaths,
@@ -78,16 +86,13 @@ void CKComponentSendDidPrepareLayoutForComponentsWithIndexPaths(id<NSFastEnumera
 }
 
 void CKComponentUpdateComponentForComponentControllerWithIndexPaths(id<NSFastEnumeration> indexPaths,
-                                                                    CKDataSourceState *state,
-                                                                    BOOL shouldUpdateComponentOverride)
+                                                                    CKDataSourceState *state)
 {
   for (NSIndexPath *indexPath in indexPaths) {
     CKDataSourceItem *item = [state objectAtIndexPath:indexPath];
-    item.rootLayout.enumerateCachedLayout(^(const CKComponentLayout &layout) {
+    item.rootLayout.enumerateCachedLayout(^(const RCLayout &layout) {
       const auto component = (CKComponent *)layout.component;
-      if ([component.class shouldUpdateComponentInController] || shouldUpdateComponentOverride) {
-        component.controller.latestComponent = component;
-      }
+      component.controller.latestComponent = component;
     });
   }
 }

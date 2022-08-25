@@ -8,13 +8,11 @@
  *
  */
 
-#import <ComponentKit/CKDefines.h>
-
-#if CK_NOT_SWIFT
-
 #import <UIKit/UIKit.h>
 
 #import <ComponentKit/CKLayoutComponent.h>
+
+NS_ASSUME_NONNULL_BEGIN
 
 /**
  @uidocs https://fburl.com/CKInsetComponent:ac83
@@ -37,22 +35,55 @@
  @note
  An CKInsetComponent with an infinite left inset and 10px for all other edges will position it's child 10px from the right edge.
  */
+NS_SWIFT_NAME(InsetComponent)
 @interface CKInsetComponent : CKLayoutComponent
 
-/** Convenience that calls +newWithView:insets:component: with {} for view. */
-+ (instancetype)newWithInsets:(UIEdgeInsets)insets component:(CKComponent *)child;
+CK_INIT_UNAVAILABLE;
+
+CK_LAYOUT_COMPONENT_INIT_UNAVAILABLE;
+
+#if CK_SWIFT
+
+/**
+ @param swiftView Passed to CKComponent -initWithView:size:. The view, if any, will extend outside the insets.
+ @param insets The amount of space to inset on each side.
+ @param component The wrapped child component to inset. If nil, this method returns nil.
+ */
+- (instancetype)initWithSwiftView:(CKComponentViewConfiguration_SwiftBridge *_Nullable)swiftView
+                              top:(RCDimension_SwiftBridge *)top
+                             left:(RCDimension_SwiftBridge *)left
+                           bottom:(RCDimension_SwiftBridge *)bottom
+                            right:(RCDimension_SwiftBridge *)right
+                        component:(CKComponent *_Nullable)component NS_DESIGNATED_INITIALIZER;
+
+#else
 
 /**
  @param view Passed to CKComponent +newWithView:size:. The view, if any, will extend outside the insets.
  @param insets The amount of space to inset on each side.
  @param component The wrapped child component to inset. If nil, this method returns nil.
  */
-+ (instancetype)newWithView:(const CKComponentViewConfiguration &)view
-                     insets:(UIEdgeInsets)insets
-                  component:(CKComponent *)component;
+- (instancetype)initWithView:(const CKComponentViewConfiguration &)view
+                         top:(RCRelativeDimension)top
+                        left:(RCRelativeDimension)left
+                      bottom:(RCRelativeDimension)bottom
+                       right:(RCRelativeDimension)right
+                   component:(CKComponent *_Nullable)component NS_DESIGNATED_INITIALIZER;
+
+/**
+ @param insets The amount of space to inset on each side.
+ @param component The wrapped child component to inset. If nil, this method returns nil.
+ */
+- (instancetype)initWithTop:(RCRelativeDimension)top
+                       left:(RCRelativeDimension)left
+                     bottom:(RCRelativeDimension)bottom
+                      right:(RCRelativeDimension)right
+                  component:(CKComponent *_Nullable)component;
+
+#endif
 
 @end
 
-#import <ComponentKit/InsetComponentBuilder.h>
+NS_ASSUME_NONNULL_END
 
-#endif
+#import <ComponentKit/InsetComponentBuilder.h>

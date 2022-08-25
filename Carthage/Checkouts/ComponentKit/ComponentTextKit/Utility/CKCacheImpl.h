@@ -15,8 +15,8 @@
 #ifndef ComponentKit_CKCacheImpl_h
 #define ComponentKit_CKCacheImpl_h
 
-#import <ComponentKit/CKFunctor.h>
-#import <ComponentKit/CKAssert.h>
+#import <ComponentTextKit/CKFunctor.h>
+#import <RenderCore/RCAssert.h>
 
 #import <CoreGraphics/CoreGraphics.h>
 #include <mutex>
@@ -316,7 +316,7 @@ namespace CK {
     void moveItemAfterHit(const KeyT &key)
     {
       auto it = _keysToCosts.find(key);
-      CKCAssertTrue(it != _keysToCosts.end());
+      RCCAssertTrue(it != _keysToCosts.end());
       _costs.splice(_costs.begin(), _costs, it->second);
     }
 

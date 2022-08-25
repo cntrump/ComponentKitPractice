@@ -10,7 +10,7 @@
 
 #import <Foundation/Foundation.h>
 #import <RenderCore/CKDefines.h>
-#import <RenderCore/CKIterable.h>
+#import <RenderCore/RCIterable.h>
 
 #if CK_NOT_SWIFT
 
@@ -21,8 +21,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 @protocol CKMountable;
 
-struct CKComponentLayout;
-struct CKComponentLayoutChild;
+struct RCLayout;
+struct RCLayoutChild;
 
 struct CKComponentViewContext {
   __kindof UIView *_Nullable view;
@@ -35,7 +35,7 @@ struct CKMountInfo {
   CKComponentViewContext viewContext;
 };
 
-@protocol CKMountable <CKIterable>
+@protocol CKMountable <RCIterable>
 
 /**
  Call this on children components to compute their layouts.
@@ -47,8 +47,8 @@ struct CKMountInfo {
 
  @return A struct defining the layout of the receiver and its children.
  */
-- (CKComponentLayout)layoutThatFits:(CKSizeRange)constrainedSize
-                         parentSize:(CGSize)parentSize;
+- (RCLayout)layoutThatFits:(CKSizeRange)constrainedSize
+                parentSize:(CGSize)parentSize;
 
 /**
  While the component is mounted, returns information about the component's manifestation in the view hierarchy.
@@ -81,15 +81,13 @@ struct CKMountInfo {
  Override this if your component wants to perform a custom mounting action, but this should be very rare!
 
  @param context The component's content should be positioned within the given view at the given position.
- @param size The size for this component
- @param children The positioned children for this component. Normally this parameter is ignored.
+ @param layout The layout that is being mounted
  @param supercomponent This component's parent component
  @return An updated mount context. In most cases, this is just be the passed-in context. If a view was created, this is
  used to specify that subcomponents should be mounted inside the view.
  */
 - (CK::Component::MountResult)mountInContext:(const CK::Component::MountContext &)context
-                                        size:(const CGSize)size
-                                    children:(std::shared_ptr<const std::vector<CKComponentLayoutChild>>)children
+                                      layout:(const RCLayout &)layout
                               supercomponent:(id<CKMountable> _Nullable)supercomponent;
 
 /**
@@ -112,9 +110,6 @@ Unmounts the component:
 /** Name of the component's class */
 @property (nonatomic, copy, readonly) NSString *className;
 
-/** A long-lived object that exists across generations */
-@property (nonatomic, strong, readonly, nullable) id controller;
-
 @end
 
 #else
@@ -122,11 +117,9 @@ Unmounts the component:
 NS_ASSUME_NONNULL_BEGIN
 
 NS_SWIFT_NAME(Mountable)
-@protocol CKMountable <CKIterable>
+@protocol CKMountable <RCIterable>
 @end
 
 #endif
 
 NS_ASSUME_NONNULL_END
-
-#import <RenderCore/CKLayout.h>

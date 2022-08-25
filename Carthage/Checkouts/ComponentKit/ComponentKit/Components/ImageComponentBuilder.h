@@ -175,6 +175,17 @@ public:
   }
 
   /**
+   Used to determine how a view lays out its content when its bounds change. The default is @c UIViewContentModeScaleToFill .
+
+   @param m A mode to set.
+   */
+  auto &contentMode(UIViewContentMode m)
+  {
+    _attributes.insert({@selector(setContentMode:), m});
+    return *this;
+  }
+
+  /**
    Sets a value for an arbitrary view property by specifying a selector that corresponds to the property setter and the
    value.
 
@@ -335,20 +346,14 @@ private:
     constexpr auto imageIsSet = PropBitmap::isSet(PropsBitmap, ImageComponentPropId::image);
     static_assert(imageIsSet, "Required property 'image' is not set.");
 
-    if (PropBitmap::isSet(PropsBitmap, ComponentBuilderBaseSizeOnlyPropId::size)) {
-      return [CKImageComponent newWithImage:_image
-                                 attributes:std::move(_attributes)
-                                       size:this->_size];
-    } else {
-      return [CKImageComponent newWithImage:_image
-                                 attributes:std::move(_attributes)
-                                       size:{}];
-    }
+    return [[CKImageComponent alloc] initWithImage:_image
+                                       attributes:std::move(_attributes)
+                                      size:this->_size];
   }
 
 private:
   UIImage *_image;
-  CKViewComponentAttributeValueMap _attributes;
+  CKViewComponentAttributeValueMap _attributes{};
 };
 
 }

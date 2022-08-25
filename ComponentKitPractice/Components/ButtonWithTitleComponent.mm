@@ -24,10 +24,13 @@
 
     UIImage *finalImage = isHighlighted ? highlightedImage : image;
 
-    CKButtonComponent* buttonComponent = [CKButtonComponent newWithAction:@selector(buttonTapped) options: {
-        .images = {finalImage}, .titleAlignment = NSTextAlignmentLeft, .size = {30, 30},
-        .tapTargetExpansion = {.right = -5}
-    }];
+    CKComponent* buttonComponent = CK::ButtonComponentBuilder()
+        .action(@selector(buttonTapped))
+        .options({
+            .images = {finalImage}, .titleAlignment = NSTextAlignmentLeft, .size = {30, 30},
+            .tapTargetExpansion = {.right = -5}
+        })
+        .build();
 
     UIColor *titleColor = isHighlighted ? Constants.blueColor : [UIColor blackColor];
 
@@ -40,13 +43,16 @@
 //    viewAttributes:{}
 //    size:{ }];
 
-    CKButtonComponent* titleTextComponent = [CKButtonComponent newWithAction:@selector(buttonTapped) options: {
-        .titleAlignment = NSTextAlignmentLeft,
-        .titleFont = [UIFont systemFontOfSize:12.0],
-        .selected = isHighlighted,
-        .titleColors = {titleColor},
-        .titles = {title}
-    }];
+    CKComponent* titleTextComponent = CK::ButtonComponentBuilder()
+        .action(@selector(buttonTapped))
+        .options({
+            .titleAlignment = NSTextAlignmentLeft,
+            .titleFont = [UIFont systemFontOfSize:12.0],
+            .selected = isHighlighted,
+            .titleColors = {titleColor},
+            .titles = {title}
+        })
+        .build();
 
     CKComponent *spacing = [CKComponent newWithView:{
         [UIView class],

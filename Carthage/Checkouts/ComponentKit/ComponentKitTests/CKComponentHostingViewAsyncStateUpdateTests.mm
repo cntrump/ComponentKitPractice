@@ -20,12 +20,12 @@
 #import <ComponentKit/CKComponentScope.h>
 #import <ComponentKit/CKComponentSubclass.h>
 
-@interface CKComponentHostingViewAsyncStateUpdateTests : XCTestCase <CKComponentProvider>
+@interface CKComponentHostingViewAsyncStateUpdateTests : XCTestCase
 @end
 
 @implementation CKComponentHostingViewAsyncStateUpdateTests
 
-+ (CKComponent *)componentForModel:(id<NSObject>)model context:(id<NSObject>)context
+static CKComponent *componentProvider(id<NSObject> model, id<NSObject> context)
 {
   CKComponentScope scope([CKComponent class]);
   return CK::ComponentBuilder()
@@ -36,15 +36,15 @@
 
 - (void)testAsynchronouslyUpdatingStateOfComponentEventuallyUpdatesCorrespondingView
 {
-  CKComponentHostingView *hostingView = [[CKComponentHostingView alloc] initWithComponentProvider:[CKComponentHostingViewAsyncStateUpdateTests class]
-                                                                                sizeRangeProvider:[CKComponentFlexibleSizeRangeProvider providerWithFlexibility:CKComponentSizeRangeFlexibleWidthAndHeight]];
+  CKComponentHostingView *hostingView = [[CKComponentHostingView alloc] initWithComponentProviderFunc:componentProvider
+                                                                                    sizeRangeProvider:[CKComponentFlexibleSizeRangeProvider providerWithFlexibility:CKComponentSizeRangeFlexibleWidthAndHeight]];
   hostingView.bounds = CGRectMake(0, 0, 100, 100);
   [hostingView layoutIfNeeded];
 
   UIView *componentView = [hostingView.containerView.subviews firstObject];
   XCTAssertEqualObjects(componentView.backgroundColor, [UIColor blackColor], @"Expected bg color to initially be black");
 
-  const CKComponentLayout &layout = [hostingView mountedLayout];
+  const RCLayout &layout = [hostingView mountedLayout];
   CKComponent *c = (CKComponent *)layout.component;
   [c updateState:^(id oldState){ return [UIColor redColor]; } mode:CKUpdateModeAsynchronous];
 
@@ -56,15 +56,15 @@
 
 - (void)testAsynchronouslyUpdatingStateOfComponentAndThenSynchronouslyUpdatingStateImmediatelyUpdatesCorrespondingView
 {
-  CKComponentHostingView *hostingView = [[CKComponentHostingView alloc] initWithComponentProvider:[CKComponentHostingViewAsyncStateUpdateTests class]
-                                                                                sizeRangeProvider:[CKComponentFlexibleSizeRangeProvider providerWithFlexibility:CKComponentSizeRangeFlexibleWidthAndHeight]];
+  CKComponentHostingView *hostingView = [[CKComponentHostingView alloc] initWithComponentProviderFunc:componentProvider
+                                                                                    sizeRangeProvider:[CKComponentFlexibleSizeRangeProvider providerWithFlexibility:CKComponentSizeRangeFlexibleWidthAndHeight]];
   hostingView.bounds = CGRectMake(0, 0, 100, 100);
   [hostingView layoutIfNeeded];
 
   UIView *componentView = [hostingView.containerView.subviews firstObject];
   XCTAssertEqualObjects(componentView.backgroundColor, [UIColor blackColor], @"Expected bg color to initially be black");
 
-  const CKComponentLayout &layout = [hostingView mountedLayout];
+  const RCLayout &layout = [hostingView mountedLayout];
   CKComponent *c = (CKComponent *)layout.component;
   [c updateState:^(id oldState){ return [UIColor redColor]; } mode:CKUpdateModeAsynchronous];
   [c updateState:^(id oldState){ return oldState; } mode:CKUpdateModeSynchronous];

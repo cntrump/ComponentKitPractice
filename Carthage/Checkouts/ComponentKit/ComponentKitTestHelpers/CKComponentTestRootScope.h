@@ -10,6 +10,9 @@
 
 #import <Foundation/Foundation.h>
 
+#import <RenderCore/RCAssert.h>
+#import <ComponentKit/CKComponentContext.h>
+#import <ComponentKit/CKComponentCreationValidation.h>
 #import <ComponentKit/CKComponentScopeRoot.h>
 #import <ComponentKit/CKComponentScopeRootFactory.h>
 #import <ComponentKit/CKThreadLocalComponentScope.h>
@@ -25,15 +28,19 @@
 class CKComponentTestRootScope {
  public:
   CKComponentTestRootScope()
-      : _previousThreadLocalComponentScope(CKThreadLocalComponentScope::currentScope()),
-        _threadLocalComponentScope(CKComponentScopeRootWithDefaultPredicates(nil, nil), {}) {
+      : _previousThreadLocalComponentScope(CKThreadLocalComponentScope::currentScope())
+      , _threadLocalComponentScope(CKComponentScopeRootWithDefaultPredicates(nil, nil), {})
+#if CK_ASSERTIONS_ENABLED
+      , _validationContext([[CKComponentCreationValidationContext alloc] initWithSource:CKComponentCreationValidationSourceBuild])
+#endif
+  {
     /*
      The component test root scope must be created outside of any existing component scope.
      If a previous thread local component scope exists then odds are good the component test root scope is being used
      outside of a test.FBSwitchComponentServerSnapshotTests.mm Component test root scopes are intended to only be used by tests, and attempting to use them
      in production code can lead to subtle issues (e.g. dropping component state updates).
      */
-     CKCAssert(_previousThreadLocalComponentScope == nullptr,
+     RCCAssert(_previousThreadLocalComponentScope == nullptr,
                @"Unable to create a component test root scope if another component scope is available\n" \
                "This can happen if a component test root scope is created outside of a test, this is not supported");
   };
@@ -41,4 +48,7 @@ class CKComponentTestRootScope {
  private:
   CKThreadLocalComponentScope *_previousThreadLocalComponentScope;
   CKThreadLocalComponentScope _threadLocalComponentScope;
+#if CK_ASSERTIONS_ENABLED
+  CKComponentContext<CKComponentCreationValidationContext> _validationContext;
+#endif
 };

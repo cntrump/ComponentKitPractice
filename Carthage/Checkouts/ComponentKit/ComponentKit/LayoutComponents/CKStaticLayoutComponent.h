@@ -14,8 +14,8 @@
 
 #import <Foundation/Foundation.h>
 
-#import <ComponentKit/CKContainerWrapper.h>
-#import <ComponentKit/CKDimension.h>
+#import <ComponentKit/RCContainerWrapper.h>
+#import <RenderCore/RCDimension.h>
 #import <ComponentKit/CKLayoutComponent.h>
 #import <ComponentKit/CKMacros.h>
 
@@ -30,7 +30,7 @@ struct CKStaticLayoutComponentChild {
    The default is Auto in both dimensions, which sets the child's min size to zero and max size to the maximum available
    space it can consume without overflowing the component's bounds.
    */
-  CKRelativeSizeRange size;
+  RCRelativeSizeRange size;
 };
 
 /**
@@ -42,21 +42,22 @@ struct CKStaticLayoutComponentChild {
  */
 @interface CKStaticLayoutComponent : CKLayoutComponent
 
+CK_INIT_UNAVAILABLE;
+
+CK_LAYOUT_COMPONENT_INIT_UNAVAILABLE;
+
 /**
  @param view Passed to the super class initializer.
  @param children Children to be positioned at fixed positions.
  */
 + (instancetype)newWithView:(const CKComponentViewConfiguration &)view
-                       size:(const CKComponentSize &)size
-                   children:(CKContainerWrapper<std::vector<CKStaticLayoutComponentChild>> &&)children;
+                       size:(const RCComponentSize &)size
+                   children:(RCContainerWrapper<std::vector<CKStaticLayoutComponentChild>> &&)children;
 
 /**
  Convenience that does not have a view or size.
  */
-+ (instancetype)newWithChildren:(CKContainerWrapper<std::vector<CKStaticLayoutComponentChild>> &&)children;
-
-+ (instancetype)newWithView:(const CKComponentViewConfiguration &)view
-                       size:(const CKComponentSize &)size CK_NOT_DESIGNATED_INITIALIZER_ATTRIBUTE;
++ (instancetype)newWithChildren:(RCContainerWrapper<std::vector<CKStaticLayoutComponentChild>> &&)children;
 
 @end
 

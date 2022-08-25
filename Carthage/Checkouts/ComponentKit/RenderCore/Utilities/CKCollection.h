@@ -19,8 +19,9 @@
 #import <functional>
 #import <type_traits>
 
-#import <RenderCore/CKAssert.h>
+#import <RenderCore/RCAssert.h>
 #import <RenderCore/CKFunctionalHelpers.h>
+#import <RenderCore/CKOptional.h>
 
 namespace CK {
   namespace Collection {
@@ -91,7 +92,34 @@ namespace CK {
       }
       return [elementStrs componentsJoinedByString:@",\n"];
     }
+
+    /**
+     Returns an optional wrapping the value for a given key if it is present in the map, \c none otherwise.
+     */
+    template <typename Map>
+    auto valueForKey(const Map& map, const typename Map::key_type& key) -> Optional<typename Map::mapped_type>
+    {
+      auto const it = map.find(key);
+      if (it == map.end()) {
+        return none;
+      }
+      return (*it).second;
+    }
   }
+}
+
+namespace CK {
+template <typename Range, typename Element>
+auto find(Range &&range, const Element &element)
+{
+  return std::find(std::begin(range), std::end(range), element);
+}
+
+template <typename Range, typename UnaryPredicate>
+auto find_if(Range &&range, UnaryPredicate&& predicate)
+{
+  return std::find_if(std::begin(range), std::end(range), std::forward<UnaryPredicate>(predicate));
+}
 }
 
 template <typename T>
@@ -132,7 +160,7 @@ public:
 private:
   static auto assertCollectionRespondsToSelector(id c, SEL sel)
   {
-    CKCAssert([c respondsToSelector:sel],
+    RCCAssert([c respondsToSelector:sel],
               @"%@ is not a collection since it doesn't respond to %@",
               c,
               NSStringFromSelector(sel));
